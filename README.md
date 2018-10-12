@@ -8,7 +8,7 @@ Safely platform for investing.
 RinkeBy: None
 <!-- [](https://rinkeby.etherscan.io/address/) -->
 
-# Installation
+# Test
 1. Install [truffle](http://truffleframework.com) globally with `npm install -g truffle`
 2. Install [ganache-cli](https://github.com/trufflesuite/ganache-cli) globally with `npm install -g ganache-cli`
 3. Install dependency in local directory with `npm install`
