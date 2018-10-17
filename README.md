@@ -1,5 +1,7 @@
 # MyMillions
 
+[![Build Status](https://travis-ci.org/MyMillionsETH/MyMillions.svg?branch=develop)](https://travis-ci.org/MyMillionsETH/MyMillions)
+
 Smart contracts for MyMillions ecosystem.
 Safely platform for investing.
 
