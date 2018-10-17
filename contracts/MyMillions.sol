@@ -98,10 +98,7 @@ contract MyMillions is Ownable, Improvements {
         address addr;           // user address
         uint256 balance;        // balance of account
         uint256 totalPay;       // sum of all input pay
-        uint256 wood;           // collected wood
-        uint256 metal;          // collected metal
-        uint256 oil;            // collected oil
-        uint256 preciousMetal;  // collected precious metal
+        uint256[] resources;    // collected resources
         uint256[] referrals;    // first layer referrals ids
     }
 
@@ -124,7 +121,7 @@ contract MyMillions is Ownable, Improvements {
     }
 
     constructor() public {
-        users.push(User(0x0, 0, 0, 0, 0, 0, 0, new uint256[](0)));  // for find by addressToUser map
+        users.push(User(0x0, 0, 0, new uint256[](4), new uint256[](0)));  // for find by addressToUser map
     }
 
     /**
@@ -133,8 +130,7 @@ contract MyMillions is Ownable, Improvements {
     function register() public payable returns(uint256) {
         require(addressToUser[msg.sender] == 0);
 
-        User memory user = User(msg.sender, msg.value, 0, 0, 0, 0, 0, new uint256[](0));
-        uint256 index = users.push(user) - 1;
+        uint256 index = users.push(User(msg.sender, msg.value, 0, new uint256[](4), new uint256[](0))) - 1;
         addressToUser[msg.sender] = index;
 
         emit CreateUser(index, msg.sender, msg.value);
@@ -164,15 +160,40 @@ contract MyMillions is Ownable, Improvements {
         return users[addressToUser[msg.sender]].balance;
     }
 
+    function resoucesOf() public view returns (uint256[]) {
+        return users[addressToUser[msg.sender]].resources;
+    }
 
-    function buyWoodFactory() public payable returns (uint256) {
+    function userInfo(uint256 _userId) public view returns(address, uint256, uint256, uint256[], uint256[]) {
+        User memory user = users[_userId];
+        return (user.addr, user.balance, user.totalPay, user.resources, user.referrals);
+    }
+
+
+    function buyFactory(FactoryType _type) public payable returns (uint256) {
         uint256 userId = addressToUser[msg.sender];
 
         // if user not registered
         if (addressToUser[msg.sender] == 0)
             userId = register();
 
-        _paymentProceed(userId, Factory(FactoryType.Wood, 0, now));
+        _paymentProceed(userId, Factory(_type, 0, now));
+    }
+
+    function buyWoodFactory() public payable returns (uint256) {
+        return buyFactory(FactoryType.Wood);
+    }
+
+    function buyMetalFactory() public payable returns (uint256) {
+        return buyFactory(FactoryType.Metal);
+    }
+
+    function buyOilFactory() public payable returns (uint256) {
+        return buyFactory(FactoryType.Oil);
+    }
+
+    function buyPreciousMetal() public payable returns (uint256) {
+        return buyFactory(FactoryType.PreciousMetal);
     }
 
     function _paymentProceed(uint256 _userId, Factory _factory) private {
@@ -245,17 +266,11 @@ contract MyMillions is Ownable, Improvements {
 
 
     function _collectResource(Factory storage _factory, User storage _user) internal returns(uint256) {
-        uint256 resources = _resourcesAtTime(_factory.ftype, _factory.level, _factory.collected_at);
-
         _factory.collected_at = now;
-
-        if (_factory.ftype == FactoryType.Wood)          _user.wood = _user.wood.add(resources);
-        if (_factory.ftype == FactoryType.Metal)         _user.metal = _user.metal.add(resources);
-        if (_factory.ftype == FactoryType.Oil)           _user.oil = _user.oil.add(resources);
-        if (_factory.ftype == FactoryType.PreciousMetal) _user.preciousMetal = _user.wood.add(resources);
+        uint256 resources = _resourcesAtTime(_factory.ftype, _factory.level, _factory.collected_at);
+        _user.resources[uint8(_factory.ftype)] = _user.resources[uint8(_factory.ftype)].add(resources);
 
         emit CollectResources(_factory.ftype, resources);
-
         return resources;
     }
 

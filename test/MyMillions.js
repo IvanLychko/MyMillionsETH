@@ -40,8 +40,8 @@ function getUser(user) {
         addr: user[0],
         balance: user[1].toNumber(),
         totalPay: user[2].toNumber(),
-        wood: user[3].toNumber(),
-        referralls: user[7]
+        wood: user[3][0].toNumber(),
+        referralls: user[4]
     }
 }
 
@@ -84,14 +84,14 @@ contract('MyMillions', function(accounts) {
         let user0_id = 1;
         await myMillions.register({from: user0});
 
-        let user0_info = getUser(await myMillions.users(user0_id));
+        let user0_info = getUser(await myMillions.userInfo(user0_id));
         expect(user0_info.addr).to.equal(user0);
 
         // register user with index 2
         let user1_id = 2;
         await myMillions.register({from: user1});
 
-        let user1_info = getUser(await myMillions.users(user1_id));
+        let user1_info = getUser(await myMillions.userInfo(user1_id));
         expect(user1_info.addr).to.equal(user1);
     });
 
@@ -128,7 +128,7 @@ contract('MyMillions', function(accounts) {
         let user0_id = 1;
         await myMillions.register({from: user0, value: sum});
 
-        let user0_info = getUser(await myMillions.users(user0_id));
+        let user0_info = getUser(await myMillions.userInfo(user0_id));
         expect(user0_info.balance).to.equal(sum);
     });
 
@@ -202,7 +202,7 @@ contract('MyMillions', function(accounts) {
         let factory0_id = 0;
 
         await myMillions.collectResources({from: user0});
-        var user0_info = getUser(await myMillions.users(user0_id));
+        var user0_info = getUser(await myMillions.userInfo(user0_id));
         expect(user0_info.wood).to.equal(ppm);
 
         var factory0_resources = (await myMillions.resourcesAtTime(factory0_id)).toNumber();
@@ -213,7 +213,7 @@ contract('MyMillions', function(accounts) {
 
         // wait second minute
         await myMillions.collectResources({from: user0});
-        user0_info = getUser(await myMillions.users(user0_id));
+        user0_info = getUser(await myMillions.userInfo(user0_id));
         expect(user0_info.wood).to.equal(2 * ppm);
 
         // first minute
@@ -221,7 +221,7 @@ contract('MyMillions', function(accounts) {
 
         // wait third minute
         await myMillions.collectResources({from: user0});
-        user0_info = getUser(await myMillions.users(user0_id));
+        user0_info = getUser(await myMillions.userInfo(user0_id));
         expect(user0_info.wood).to.equal(3 * ppm);
     });
 
@@ -243,7 +243,7 @@ contract('MyMillions', function(accounts) {
         await setNextBlockDelay(minute);
         await myMillions.levelUp(factory0_id, {from: user0, value: 2 * sumLevel1});
 
-        var user0_info = getUser(await myMillions.users(user0_id));
+        var user0_info = getUser(await myMillions.userInfo(user0_id));
         expect(user0_info.wood).to.equal(ppmLevel0 + ppmBonusLevel0);
 
         // check new level
@@ -253,32 +253,33 @@ contract('MyMillions', function(accounts) {
         // check collected resources in new level
         await setNextBlockDelay(minute);
         await myMillions.collectResources({from: user0});
-        user0_info = getUser(await myMillions.users(user0_id));
+        user0_info = getUser(await myMillions.userInfo(user0_id));
         expect(user0_info.wood).to.equal(ppmLevel0 + ppmBonusLevel0 + ppmLevel1 + ppmBonusLevel1);
 
         // check residual balance
-        user0_info = getUser(await myMillions.users(user0_id));
+        user0_info = getUser(await myMillions.userInfo(user0_id));
         expect(user0_info.balance).to.equal(sumLevel1);
     });
 
-    it('level up limited', async function () {
+    it('total level up', async function () {
         let user0_id = 1;
         let levelsCount = (await myMillions.levelsCount()).toNumber()
         let factory0_id = 0;
+        let factory0_type = 0;
         var totalProducts = 0;
 
         await myMillions.register({from: user0});
 
         for (var i = 0; i < levelsCount; i++) {
             // get actual price for wood factory and ppm with bonus
-            let sum = (await myMillions.getPrice(0, i)).toNumber();
-            let ppm = (await myMillions.getProductsPerMinute(0, i)).toNumber();
-            let ppmBonus = (await myMillions.getBonusPerMinute(0, i)).toNumber();
+            let sum = (await myMillions.getPrice(factory0_type, i)).toNumber();
+            let ppm = (await myMillions.getProductsPerMinute(factory0_type, i)).toNumber();
+            let ppmBonus = (await myMillions.getBonusPerMinute(factory0_type, i)).toNumber();
 
             totalProducts += ppm + ppmBonus;
 
             if (i == 0) {
-                await myMillions.buyWoodFactory({from: user0, value: sum});
+                await myMillions.buyFactory(factory0_type, {from: user0, value: sum});
                 continue;
             }
 
@@ -289,7 +290,7 @@ contract('MyMillions', function(accounts) {
         await setNextBlockDelay(minute);
         await myMillions.collectResources({from: user0});
 
-        let user0_info = getUser(await myMillions.users(user0_id));
+        let user0_info = getUser(await myMillions.userInfo(user0_id));
         expect(user0_info.wood).to.equal(totalProducts);
     });
 
