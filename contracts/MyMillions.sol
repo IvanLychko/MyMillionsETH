@@ -20,7 +20,7 @@ contract Improvements {
     enum FactoryType { Wood, Metal, Oil, PreciousMetal }
 
     mapping (uint8 => mapping (uint8 => Params)) public levelStack;
-    uint8 constant levelsCount = 7;
+    uint8 public constant levelsCount = 7;
 
     struct Params {
         uint256 price;      // improvements cost
@@ -90,8 +90,8 @@ contract MyMillions is Ownable, Improvements {
 
     event CreateUser(uint256 _index, address _address, uint256 _balance);
     event ReferralRegister(uint256 _refferalId, uint256 _userId);
-    event PaymentProceed(uint256 _userId, uint256 _factoryId, uint256 _price);
-    event CollectResources(FactoryType _type, uint256 _userId, uint256 _resources);
+    event PaymentProceed(uint256 _userId, uint256 _factoryId, FactoryType _factoryType, uint256 _price);
+    event CollectResources(FactoryType _type, uint256 _resources);
     event LevelUp(uint256 _factoryId, uint8 _newLevel, uint256 _userId);
 
     struct User {
@@ -111,7 +111,7 @@ contract MyMillions is Ownable, Improvements {
     struct Factory {
         FactoryType ftype;  // factory type
         uint8 level;        // factory level
-        uint256 updated_at; //timestamp updated
+        uint256 collected_at; // timestamp updated
     }
 
     Factory[] public factories;
@@ -189,7 +189,7 @@ contract MyMillions is Ownable, Improvements {
         factoryToUser[index] = _userId;
         userToFactories[_userId].push(index);
 
-        emit PaymentProceed(_userId, index, price);
+        emit PaymentProceed(_userId, index, _factory.ftype, price);
     }
 
     function _checkPayment(User _user, FactoryType _type, uint8 _level) private view returns(bool) {
@@ -205,41 +205,59 @@ contract MyMillions is Ownable, Improvements {
         Factory storage factory = factories[_factoryId];
         uint256 price = getPrice(factory.ftype, factory.level + 1);
 
-        require(msg.value >= price);
-
         uint256 userId = addressToUser[msg.sender];
         User storage user = users[userId];
 
+        require(_checkPayment(user, factory.ftype, factory.level + 1));
+
         // payment
 
-        user.balance = user.balance.add(msg.value.sub(price));
+        user.balance = user.balance.add(msg.value);
+        user.balance = user.balance.sub(price);
         user.totalPay = user.totalPay.add(price);
 
         // collect
 
+        _collectResource(factory, user);
         factory.level++;
 
         emit LevelUp(_factoryId, factory.level, userId);
     }
 
 
-    function worktimeAtDate(uint256 _updated_at) public view returns(uint256) {
-        return (now - _updated_at) / 60;
+    function worktimeAtDate(uint256 _collected_at) public view returns(uint256) {
+        return (now - _collected_at) / 60;
     }
 
     function worktime(uint256 _factoryId) public view returns(uint256) {
-        return worktimeAtDate(factories[_factoryId].updated_at);
+        return worktimeAtDate(factories[_factoryId].collected_at);
     }
 
-    function _resourcesAtTime(FactoryType _type, uint8 _level, uint256 _updated_at) public view returns(uint256) {
-        return worktimeAtDate(_updated_at) * (getProductsPerMinute(_type, _level) + getBonusPerMinute(_type, _level));
+
+    function _resourcesAtTime(FactoryType _type, uint8 _level, uint256 _collected_at) public view returns(uint256) {
+        return worktimeAtDate(_collected_at) * (getProductsPerMinute(_type, _level) + getBonusPerMinute(_type, _level));
     }
 
     function resourcesAtTime(uint256 _factoryId) public view returns(uint256) {
         Factory storage factory = factories[_factoryId];
-        return _resourcesAtTime(factory.ftype, factory.level, factory.updated_at);
+        return _resourcesAtTime(factory.ftype, factory.level, factory.collected_at);
     }
 
+
+    function _collectResource(Factory storage _factory, User storage _user) internal returns(uint256) {
+        uint256 resources = _resourcesAtTime(_factory.ftype, _factory.level, _factory.collected_at);
+
+        _factory.collected_at = now;
+
+        if (_factory.ftype == FactoryType.Wood)          _user.wood = _user.wood.add(resources);
+        if (_factory.ftype == FactoryType.Metal)         _user.metal = _user.metal.add(resources);
+        if (_factory.ftype == FactoryType.Oil)           _user.oil = _user.oil.add(resources);
+        if (_factory.ftype == FactoryType.PreciousMetal) _user.preciousMetal = _user.wood.add(resources);
+
+        emit CollectResources(_factory.ftype, resources);
+
+        return resources;
+    }
 
     function collectResources() public onlyExistingUser {
         uint256 index = addressToUser[msg.sender];
@@ -247,22 +265,8 @@ contract MyMillions is Ownable, Improvements {
         uint256[] storage factoriesIds = userToFactories[addressToUser[msg.sender]];
 
         for (uint256 i = 0; i < factoriesIds.length; i++) {
-            var (ftype, resources) = _collectResources(factoriesIds[i], user);
-
-            if (ftype == FactoryType.Wood)          user.wood = user.wood.add(resources);
-            if (ftype == FactoryType.Metal)         user.metal = user.metal.add(resources);
-            if (ftype == FactoryType.Oil)           user.oil = user.oil.add(resources);
-            if (ftype == FactoryType.PreciousMetal) user.preciousMetal = user.wood.add(resources);
-
-            emit CollectResources(ftype, index, resources);
+            _collectResource(factories[factoriesIds[i]], user);
         }
-    }
-
-    function _collectResources(uint256 _factoryId, User _user) private returns(FactoryType, uint256) {
-        Factory memory factory = factories[_factoryId];
-        uint256 resources = _resourcesAtTime(factory.ftype, factory.level, factory.updated_at);
-
-        return (factory.ftype, resources);
     }
 
 }
