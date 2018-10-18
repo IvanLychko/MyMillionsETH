@@ -12,6 +12,7 @@ pragma solidity ^0.4.24;
 *        _\///______________\///___\////________\///______________\///__\///__\/////////__\/////////__\///_____\/////_____\///____\///__\//////////__
 */
 
+import "./Math.sol";
 import "./Ownable.sol";
 import "./SafeMath.sol";
 
@@ -107,9 +108,11 @@ contract MyMillions is Ownable, Improvements {
 
     event CreateUser(uint256 _index, address _address, uint256 _balance);
     event ReferralRegister(uint256 _refferalId, uint256 _userId);
+    event Deposit(uint256 _userId, uint256 _value);
     event PaymentProceed(uint256 _userId, uint256 _factoryId, FactoryType _factoryType, uint256 _price);
     event CollectResources(FactoryType _type, uint256 _resources);
     event LevelUp(uint256 _factoryId, uint8 _newLevel, uint256 _userId);
+    event Sell(uint256 _userId, uint8 _type, uint256 _sum);
 
     struct User {
         address addr;           // user address
@@ -166,6 +169,14 @@ contract MyMillions is Ownable, Improvements {
 
         emit ReferralRegister(_refId, index);
         return index;
+    }
+
+    function deposit() public payable returns(uint256) {
+        uint256 userId = addressToUser[msg.sender];
+        users[userId].balance = users[userId].balance.add(msg.value);
+
+        emit Deposit(userId, msg.value);
+        return users[userId].balance;
     }
 
 
@@ -260,6 +271,17 @@ contract MyMillions is Ownable, Improvements {
         factory.level++;
 
         emit LevelUp(_factoryId, factory.level, userId);
+    }
+
+
+    function sellResources(uint8 _type) public returns (uint256) {
+        uint256 userId = addressToUser[msg.sender];
+        uint256 sum = Math.min(users[addressToUser[msg.sender]].resources[_type] * getResourcePrice(_type), address(this).balance);
+        users[userId].resources[_type] = 0;
+
+        msg.sender.transfer(sum);
+
+        emit Sell(userId, _type, sum);
     }
 
 
