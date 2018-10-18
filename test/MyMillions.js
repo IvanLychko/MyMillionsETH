@@ -302,13 +302,14 @@ contract('MyMillions', function(accounts) {
     });
 
     it('sell wood', async function () {
-        myMillions = await MyMillions.new({from: owner, value: web3.toWei(1, 'ether')});
-
         let user0_id = 1;
         // get actual price for wood factory and ppm
         let sum = (await myMillions.getPrice(0, 0)).toNumber();
         let ppm = (await myMillions.getProductsPerMinute(0, 0)).toNumber();
         let resourceSum = (await myMillions.getResourcePrice(0)).toNumber();
+
+        // deploy new contract with enough cap
+        myMillions = await MyMillions.new({from: owner, value: ppm});
 
         // register with buy wood factory
         await myMillions.register({from: user0});
