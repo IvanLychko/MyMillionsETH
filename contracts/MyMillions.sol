@@ -124,6 +124,8 @@ contract MyMillions is Ownable, Improvements {
 
     User[] public users;
     mapping (address => uint256) public addressToUser;
+    address public constant developers = 0xB68e8C1EAC20e6B3c92fBB9a601F9Fa1e0475D59;
+    uint256 public constant developersPercent = 15;
 
     struct Factory {
         FactoryType ftype;  // factory type
@@ -174,6 +176,9 @@ contract MyMillions is Ownable, Improvements {
     function deposit() public payable returns(uint256) {
         uint256 userId = addressToUser[msg.sender];
         users[userId].balance = users[userId].balance.add(msg.value);
+        
+        // distribute
+        _distributeInvestment(msg.value);
 
         emit Deposit(userId, msg.value);
         return users[userId].balance;
@@ -224,6 +229,10 @@ contract MyMillions is Ownable, Improvements {
         return buyFactory(FactoryType.PreciousMetal);
     }
 
+    function _distributeInvestment(uint256 _value) private {
+        developers.transfer(msg.value * developersPercent / 100);
+    }
+
     function _paymentProceed(uint256 _userId, Factory _factory) private {
         User storage user = users[_userId];
 
@@ -237,6 +246,9 @@ contract MyMillions is Ownable, Improvements {
         uint256 index = factories.push(_factory) - 1;
         factoryToUser[index] = _userId;
         userToFactories[_userId].push(index);
+
+        // distribute
+        _distributeInvestment(msg.value);
 
         emit PaymentProceed(_userId, index, _factory.ftype, price);
     }
