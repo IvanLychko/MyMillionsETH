@@ -309,7 +309,7 @@ contract('MyMillions', function(accounts) {
         let resourceSum = (await myMillions.getResourcePrice(0)).toNumber();
 
         // deploy new contract with enough cap
-        myMillions = await MyMillions.new({from: owner, value: ppm});
+        myMillions = await MyMillions.new({from: owner, value: 2 * ppm * resourceSum});
 
         // register with buy wood factory
         await myMillions.register({from: user0});
