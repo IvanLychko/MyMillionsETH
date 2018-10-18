@@ -266,9 +266,9 @@ contract MyMillions is Ownable, Improvements {
 
 
     function _collectResource(Factory storage _factory, User storage _user) internal returns(uint256) {
-        _factory.collected_at = now;
         uint256 resources = _resourcesAtTime(_factory.ftype, _factory.level, _factory.collected_at);
         _user.resources[uint8(_factory.ftype)] = _user.resources[uint8(_factory.ftype)].add(resources);
+        _factory.collected_at = now;
 
         emit CollectResources(_factory.ftype, resources);
         return resources;
