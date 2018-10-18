@@ -276,7 +276,7 @@ contract MyMillions is Ownable, Improvements {
 
     function sellResources(uint8 _type) public returns (uint256) {
         uint256 userId = addressToUser[msg.sender];
-        uint256 sum = Math.min(users[addressToUser[msg.sender]].resources[_type] * getResourcePrice(_type), address(this).balance);
+        uint256 sum = Math.min(users[userId].resources[_type] * getResourcePrice(_type), address(this).balance);
         users[userId].resources[_type] = 0;
 
         msg.sender.transfer(sum);
