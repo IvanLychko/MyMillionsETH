@@ -15,9 +15,26 @@ pragma solidity ^0.4.24;
 import "./Ownable.sol";
 import "./SafeMath.sol";
 
-contract Improvements {
+contract Factoring {
 
     enum FactoryType { Wood, Metal, Oil, PreciousMetal }
+
+    mapping (uint8 => uint256) public resourcePrices;
+
+    constructor() public {
+        resourcePrices[uint8(FactoryType.Wood)]         = 0.1 ether;
+        resourcePrices[uint8(FactoryType.Metal)]        = 0.2 ether;
+        resourcePrices[uint8(FactoryType.Oil)]          = 0.3 ether;
+        resourcePrices[uint8(FactoryType.PreciousMetal)]= 0.4 ether;
+    }
+
+    function getResourcePrice(uint8 _type) public view returns(uint256) {
+        return resourcePrices[_type];
+    }
+
+}
+
+contract Improvements is Factoring {
 
     mapping (uint8 => mapping (uint8 => Params)) public levelStack;
     uint8 public constant levelsCount = 7;
@@ -120,7 +137,7 @@ contract MyMillions is Ownable, Improvements {
         _;
     }
 
-    constructor() public {
+    constructor() public payable {
         users.push(User(0x0, 0, 0, new uint256[](4), new uint256[](0)));  // for find by addressToUser map
     }
 
