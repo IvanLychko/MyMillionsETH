@@ -41,7 +41,7 @@ function getUser(user) {
         balance: user[1].toNumber(),
         totalPay: user[2].toNumber(),
         resources: user[3].map(x => x.toNumber()),
-        referralls: user[4].map(x => x.toNumber())
+        referrers: user[4].map(x => x.toNumber())
     }
 }
 
@@ -64,6 +64,10 @@ contract('MyMillions', function(accounts) {
     const user0 = accounts[1];
     const user1 = accounts[2];
     const user2 = accounts[3];
+    const user3 = accounts[4];
+    const user4 = accounts[5];
+    const user5 = accounts[6];
+    const user6 = accounts[7];
 
     const gasPrice = web3.toWei('15', 'gwei');
 
@@ -100,22 +104,52 @@ contract('MyMillions', function(accounts) {
         await expectThrow(myMillions.register({from: user0}));
     });
 
-    it('register users with ref id', async function () {
+    it('register users with ref id for all levels', async function () {
         // register user with index 1
         let user0_id = 1;
         await myMillions.register({from: user0});
 
-        // register user with refId of first user
-        let user1_id = 2;
-        await myMillions.registerWithRefID(user0_id, {from: user1});
+        // register users for all levels referrals
+        let users_count = 5;
+        for (var i = 1; i <= users_count; i++) {
+            await myMillions.registerWithRefID(i, {from: accounts[i + 1]});
+        }
 
-        // register user with refId of first user
-        let user2_id = 3;
-        await myMillions.registerWithRefID(user0_id, {from: user2});
+        // check all levels referrers
+        let last_user_referrers = (await myMillions.referrersOf({from: accounts[users_count]})).map(x => x.toNumber());
+        for (var i = 0; i < users_count; i++) {
+            expect(last_user_referrers[i]).to.equal(users_count - i - 1);
+        }
+    });
 
-        let user0_referrals = await myMillions.referralsOf({from: user0});
-        expect(user0_referrals[0].toNumber()).to.equal(user1_id);
-        expect(user0_referrals[1].toNumber()).to.equal(user2_id);
+    it('referrals distribute', async function () {
+        // register user with index 1
+        let user0_id = 1;
+        await myMillions.register({from: user0});
+
+        // register users for all levels referrals
+        let users_count = 6;
+        for (var i = 1; i <= users_count; i++) {
+            await myMillions.registerWithRefID(i, {from: accounts[i + 1]});
+        }
+
+        // buy factory with referral distribution
+        let last_user_id = users_count;
+        let sum = (await myMillions.getPrice(0, 0)).toNumber();
+        await myMillions.buyWoodFactory({from: accounts[last_user_id], value: sum});
+
+        let firsty_percents = (await myMillions.getReferralPercentsByIndex(0)).map(x => x.toNumber());
+        let loyalty_percents = (await myMillions.getReferralPercentsByIndex(1)).map(x => x.toNumber());
+        let ultraPremium_percents = (await myMillions.getReferralPercentsByIndex(2)).map(x => x.toNumber());
+        let multi = 10000;
+
+        let last_user_referrers = (await myMillions.referrersOf({from: accounts[users_count]})).map(x => x.toNumber());
+
+        for (var i = 0; i < last_user_referrers.length; i++) {
+            let user_info = getUser(await myMillions.userInfo(last_user_referrers[i]));
+
+            expect(user_info.balance).to.equal(sum * firsty_percents[i] / multi);
+        }
     });
 
     it('register with initial balance', async function () {
@@ -273,7 +307,7 @@ contract('MyMillions', function(accounts) {
         let levelsCount = (await myMillions.levelsCount()).toNumber()
         let factory0_id = 0;
         let factory0_type = 0;
-        var totalProducts = 0;
+        var totalProducts = 0;  // change to resources
 
         await myMillions.register({from: user0});
 
@@ -315,21 +349,22 @@ contract('MyMillions', function(accounts) {
         await myMillions.register({from: user0});
         await myMillions.buyWoodFactory({from: user0, value: sum});
 
-        let user0_balance = web3.eth.getBalance(user0).toNumber();
         // wait first minute
         await setNextBlockDelay(minute);
+
+        let user0_balance = web3.eth.getBalance(user0).toNumber();
 
         // get factory
         let factory0_id = 0;
 
         // execute with zero gas price
-        await myMillions.collectResources({from: user0, gasPrice: 0});
-        await myMillions.sellResources(0, {from: user0, gasPrice: 0});
+        let collect_tx = await myMillions.collectResources({from: user0, gasPrice: 0});
+        let sell_tx = await myMillions.sellResources(0, {from: user0, gasPrice: 0});
 
         // check change balance of user0
         let user0_new_balance = web3.eth.getBalance(user0).toNumber();
         let profit = user0_new_balance - user0_balance;
-        expect(profit).to.equal(resourceSum * ppm);
+        assert(profit >= resourceSum * ppm)
 
         // check resources of user
         let user0_info = getUser(await myMillions.userInfo(user0_id));

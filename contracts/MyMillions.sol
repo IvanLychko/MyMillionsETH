@@ -103,23 +103,78 @@ contract Improvements is Factoring {
     }
 }
 
-contract MyMillions is Ownable, Improvements {
+contract ReferralsSystem {
+
+    struct ReferralGroup {
+        uint256 minSum;
+        uint256 maxSum;
+        uint16[] percents;
+    }
+
+    uint256 public constant minSumReferral = 0.01 ether;
+    uint256 public constant referralLevelsGroups = 3;
+    uint256 public constant referralLevelsCount = 5;
+    ReferralGroup[] public referralGroups;
+
+    constructor() public {
+        ReferralGroup memory refGroupFirsty = ReferralGroup(minSumReferral, 10 ether - 1 wei, new uint16[](referralLevelsCount));
+        refGroupFirsty.percents[0] = 300;   // 3%
+        refGroupFirsty.percents[1] = 75;    // 0.75%
+        refGroupFirsty.percents[2] = 60;    // 0.6%
+        refGroupFirsty.percents[3] = 40;    // 0.4%
+        refGroupFirsty.percents[4] = 25;    // 0.25%
+        referralGroups.push(refGroupFirsty);
+
+        ReferralGroup memory refGroupLoyalty = ReferralGroup(10 ether, 50 ether - 1 wei, new uint16[](referralLevelsCount));
+        refGroupLoyalty.percents[0] = 500;  // 5%
+        refGroupLoyalty.percents[1] = 200;  // 2%
+        refGroupLoyalty.percents[2] = 150;  // 1.5%
+        refGroupLoyalty.percents[3] = 100;  // 1%
+        refGroupLoyalty.percents[4] = 50;   // 0.5%
+        referralGroups.push(refGroupLoyalty);
+
+        ReferralGroup memory refGroupUltraPremium = ReferralGroup(50 ether, 2**256 - 1, new uint16[](referralLevelsCount));
+        refGroupUltraPremium.percents[0] = 700; // 7%
+        refGroupUltraPremium.percents[1] = 300; // 3%
+        refGroupUltraPremium.percents[2] = 250; // 2.5%
+        refGroupUltraPremium.percents[3] = 150; // 1.5%
+        refGroupUltraPremium.percents[4] = 100; // 1%
+        referralGroups.push(refGroupUltraPremium);
+    }
+
+    function getReferralPercents(uint256 _sum) public view returns(uint16[]) {
+        for (uint i = 0; i < referralLevelsGroups; i++) {
+            ReferralGroup memory group = referralGroups[i];
+            if (_sum >= group.minSum && _sum <= group.maxSum) return group.percents;
+        }
+    }
+
+    function getReferralPercentsByIndex(uint256 _index) public view returns(uint16[]) {
+        return referralGroups[_index].percents;
+    }
+
+}
+
+contract MyMillions is Ownable, Improvements, ReferralsSystem {
     using SafeMath for uint256;
 
     event CreateUser(uint256 _index, address _address, uint256 _balance);
     event ReferralRegister(uint256 _refferalId, uint256 _userId);
+    event ReferrerDistribute(uint256 _userId, uint256 _referrerId, uint256 _sum);
     event Deposit(uint256 _userId, uint256 _value);
     event PaymentProceed(uint256 _userId, uint256 _factoryId, FactoryType _factoryType, uint256 _price);
     event CollectResources(FactoryType _type, uint256 _resources);
     event LevelUp(uint256 _factoryId, uint8 _newLevel, uint256 _userId);
     event Sell(uint256 _userId, uint8 _type, uint256 _sum);
+    event Test(uint256 _step);
 
     struct User {
-        address addr;           // user address
-        uint256 balance;        // balance of account
-        uint256 totalPay;       // sum of all input pay
-        uint256[] resources;    // collected resources
-        uint256[] referrals;    // first layer referrals ids
+        address addr;                                   // user address
+        uint256 balance;                                // balance of account
+        uint256 totalPay;                               // sum of all input pay
+        uint256[] resources;                            // collected resources
+        uint256[] referrersByLevel;                     // referrers user ids
+        mapping (uint8 => uint256[]) referralsByLevel;  // all referrals user ids
     }
 
     User[] public users;
@@ -141,7 +196,7 @@ contract MyMillions is Ownable, Improvements {
     }
 
     constructor() public payable {
-        users.push(User(0x0, 0, 0, new uint256[](4), new uint256[](0)));  // for find by addressToUser map
+        users.push(User(0x0, 0, 0, new uint256[](4), new uint256[](referralLevelsCount)));  // for find by addressToUser map
     }
 
     /**
@@ -150,7 +205,7 @@ contract MyMillions is Ownable, Improvements {
     function register() public payable returns(uint256) {
         require(addressToUser[msg.sender] == 0);
 
-        uint256 index = users.push(User(msg.sender, msg.value, 0, new uint256[](4), new uint256[](0))) - 1;
+        uint256 index = users.push(User(msg.sender, msg.value, 0, new uint256[](4), new uint256[](referralLevelsCount))) - 1;
         addressToUser[msg.sender] = index;
 
         emit CreateUser(index, msg.sender, msg.value);
@@ -165,11 +220,38 @@ contract MyMillions is Ownable, Improvements {
         require(_refId < users.length);
 
         uint256 index = register();
-        users[_refId].referrals.push(index);
+        updateReferrals(index, _refId);
 
         emit ReferralRegister(_refId, index);
         return index;
     }
+
+    function updateReferrals(uint256 _newUserId, uint256 _refUserId) private {
+        users[_newUserId].referrersByLevel[0] = _refUserId;
+
+        for (uint i = 1; i < referralLevelsCount; i++) {
+            users[_newUserId].referrersByLevel[i] = users[_refUserId].referrersByLevel[i - 1];
+        }
+
+        users[_refUserId].referralsByLevel[0].push(_newUserId);
+    }
+
+    function _distributeReferrers(uint256 _userId, uint256 _sum) private {
+        if (users[_userId].totalPay < minSumReferral) return;
+
+        uint256[] memory referrers = users[_userId].referrersByLevel;
+        uint16[] memory percents = getReferralPercents(users[_userId].totalPay);
+
+        for (uint i = 0; i < referralLevelsCount; i++) {
+            if (referrers[i] == 0) break;
+
+            uint256 value = _sum * percents[i] / 10000;
+            users[referrers[i]].balance = users[referrers[i]].balance.add(value);
+
+            emit ReferrerDistribute(_userId, referrers[i], value);
+        }
+    }
+
 
     function deposit() public payable returns(uint256) {
         uint256 userId = addressToUser[msg.sender];
@@ -183,10 +265,6 @@ contract MyMillions is Ownable, Improvements {
     }
 
 
-    function referralsOf() public view returns (uint256[]) {
-        return users[addressToUser[msg.sender]].referrals;
-    }
-
     function balanceOf() public view returns (uint256) {
         return users[addressToUser[msg.sender]].balance;
     }
@@ -195,9 +273,13 @@ contract MyMillions is Ownable, Improvements {
         return users[addressToUser[msg.sender]].resources;
     }
 
+    function referrersOf() public view returns (uint256[]) {
+        return users[addressToUser[msg.sender]].referrersByLevel;
+    }
+
     function userInfo(uint256 _userId) public view returns(address, uint256, uint256, uint256[], uint256[]) {
         User memory user = users[_userId];
-        return (user.addr, user.balance, user.totalPay, user.resources, user.referrals);
+        return (user.addr, user.balance, user.totalPay, user.resources, user.referrersByLevel);
     }
 
 
@@ -247,6 +329,7 @@ contract MyMillions is Ownable, Improvements {
 
         // distribute
         _distributeInvestment(msg.value);
+        _distributeReferrers(_userId, price);
 
         emit PaymentProceed(_userId, index, _factory.ftype, price);
     }
@@ -270,13 +353,11 @@ contract MyMillions is Ownable, Improvements {
         require(_checkPayment(user, factory.ftype, factory.level + 1));
 
         // payment
-
         user.balance = user.balance.add(msg.value);
         user.balance = user.balance.sub(price);
         user.totalPay = user.totalPay.add(price);
 
         // collect
-
         _collectResource(factory, user);
         factory.level++;
 
