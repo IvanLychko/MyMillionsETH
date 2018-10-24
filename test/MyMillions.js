@@ -110,16 +110,33 @@ contract('MyMillions', function(accounts) {
         await myMillions.register({from: user0});
 
         // register users for all levels referrals
-        let users_count = 5;
-        for (var i = 1; i <= users_count; i++) {
+        let levels_count = (await myMillions.referralLevelsCount()).toNumber();
+        for (var i = 1; i <= levels_count; i++) {
             await myMillions.registerWithRefID(i, {from: accounts[i + 1]});
         }
 
         // check all levels referrers
-        let last_user_referrers = (await myMillions.referrersOf({from: accounts[users_count]})).map(x => x.toNumber());
-        for (var i = 0; i < users_count; i++) {
-            expect(last_user_referrers[i]).to.equal(users_count - i - 1);
+        let last_user_referrers = (await myMillions.referrersOf({from: accounts[levels_count]})).map(x => x.toNumber());
+        for (var i = 0; i < levels_count; i++) {
+            expect(last_user_referrers[i]).to.equal(levels_count - i - 1);
         }
+
+        // check all levels referrals
+        for (var i = 0; i < levels_count; i++) {
+            let referrals = (await myMillions.referralsOf(i, {from: accounts[1]})).map(x => x.toNumber());
+            expect(referrals[0]).to.equal(i + 2);
+        }
+
+        // check one more referral
+        let user_id = levels_count + 2;
+        let referrals = (await myMillions.referralsOf(levels_count - 2, {from: accounts[1]})).map(x => x.toNumber());
+
+        // register with refId from pre-last referrals of first user
+        await myMillions.registerWithRefID(referrals[0], {from: accounts[user_id]});
+
+        // check new user
+        referrals = (await myMillions.referralsOf(levels_count - 1, {from: accounts[1]})).map(x => x.toNumber());
+        expect(referrals[1]).to.equal(user_id);
     });
 
     it('referrals distribute', async function () {

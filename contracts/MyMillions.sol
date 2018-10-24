@@ -220,7 +220,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         require(_refId < users.length);
 
         uint256 index = register();
-        updateReferrals(index, _refId);
+        _updateReferrals(index, _refId);
 
         emit ReferralRegister(_refId, index);
         return index;
@@ -230,7 +230,9 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         users[_newUserId].referrersByLevel[0] = _refUserId;
 
         for (uint i = 1; i < referralLevelsCount; i++) {
-            users[_newUserId].referrersByLevel[i] = users[_refUserId].referrersByLevel[i - 1];
+            uint256 _refId = users[_refUserId].referrersByLevel[i - 1];
+            users[_newUserId].referrersByLevel[i] = _refId;
+            users[_refId].referralsByLevel[uint8(i)].push(_newUserId);
         }
 
         users[_refUserId].referralsByLevel[0].push(_newUserId);
@@ -275,6 +277,10 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
 
     function referrersOf() public view returns (uint256[]) {
         return users[addressToUser[msg.sender]].referrersByLevel;
+    }
+
+    function referralsOf(uint8 _level) public view returns (uint256[]) {
+        return users[addressToUser[msg.sender]].referralsByLevel[uint8(_level)];
     }
 
     function userInfo(uint256 _userId) public view returns(address, uint256, uint256, uint256[], uint256[]) {
