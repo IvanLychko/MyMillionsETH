@@ -155,6 +155,8 @@ contract ReferralsSystem {
 
 }
 
+/// @title Smart-contract of MyMillions ecosystem
+/// @author Shagaleev Alexey
 contract MyMillions is Ownable, Improvements, ReferralsSystem {
     using SafeMath for uint256;
 
@@ -199,9 +201,8 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         users.push(User(0x0, 0, 0, new uint256[](4), new uint256[](referralLevelsCount)));  // for find by addressToUser map
     }
 
-    /**
-     * @dev register for only new users with min pay
-     */
+    // @dev register for only new users with min pay
+    /// @return id of new user
     function register() public payable returns(uint256) {
         require(addressToUser[msg.sender] == 0);
 
@@ -212,10 +213,10 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         return index;
     }
 
-    /**
-     * @dev just registry by referral link
-     * @param _refId the ID of the user who gets the affiliate fee
-     */
+
+    /// @notice just registry by referral link
+    /// @param _refId the ID of the user who gets the affiliate fee
+    /// @return id of new user
     function registerWithRefID(uint256 _refId) public payable returns(uint256) {
         require(_refId < users.length);
 
@@ -226,7 +227,10 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         return index;
     }
 
-    function updateReferrals(uint256 _newUserId, uint256 _refUserId) private {
+    /// @notice update referrersByLevel and referralsByLevel of new user
+    /// @param _newUserId the ID of the new user
+    /// @param _refUserId the ID of the user who gets the affiliate fee
+    function _updateReferrals(uint256 _newUserId, uint256 _refUserId) private {
         users[_newUserId].referrersByLevel[0] = _refUserId;
 
         for (uint i = 1; i < referralLevelsCount; i++) {
@@ -238,6 +242,9 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         users[_refUserId].referralsByLevel[0].push(_newUserId);
     }
 
+    /// @notice distribute value of tx to referrers of user
+    /// @param _userId the ID of the user who gets the affiliate fee
+    /// @param _sum value of ethereum for distribute to referrers of user
     function _distributeReferrers(uint256 _userId, uint256 _sum) private {
         if (users[_userId].totalPay < minSumReferral) return;
 
@@ -254,7 +261,8 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         }
     }
 
-
+    /// @notice deposit ethereum for user
+    /// @return balance value of user
     function deposit() public payable returns(uint256) {
         uint256 userId = addressToUser[msg.sender];
         users[userId].balance = users[userId].balance.add(msg.value);
@@ -266,29 +274,46 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         return users[userId].balance;
     }
 
-
+    /// @notice getter for balance of user
+    /// @return balance value of user
     function balanceOf() public view returns (uint256) {
         return users[addressToUser[msg.sender]].balance;
     }
 
+    /// @notice getter for resources of user
+    /// @return resources value of user
     function resoucesOf() public view returns (uint256[]) {
         return users[addressToUser[msg.sender]].resources;
     }
 
+    /// @notice getter for referrers of user
+    /// @return array of referrers id
     function referrersOf() public view returns (uint256[]) {
         return users[addressToUser[msg.sender]].referrersByLevel;
     }
 
+    /// @notice getter for referrals of user by level
+    /// @param _level level of referrals user needed
+    /// @return array of referrals id
     function referralsOf(uint8 _level) public view returns (uint256[]) {
         return users[addressToUser[msg.sender]].referralsByLevel[uint8(_level)];
     }
 
+    /// @notice getter for extended information of user
+    /// @param _userId id of user needed
+    /// @return address of user
+    /// @return balance of user
+    /// @return totalPay of user
+    /// @return array of resources user
+    /// @return array of referrers id user
     function userInfo(uint256 _userId) public view returns(address, uint256, uint256, uint256[], uint256[]) {
         User memory user = users[_userId];
         return (user.addr, user.balance, user.totalPay, user.resources, user.referrersByLevel);
     }
 
-
+    /// @notice mechanics of buying any factory
+    /// @param _type type of factory needed
+    /// @return id of new factory
     function buyFactory(FactoryType _type) public payable returns (uint256) {
         uint256 userId = addressToUser[msg.sender];
 
@@ -296,30 +321,47 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         if (addressToUser[msg.sender] == 0)
             userId = register();
 
-        _paymentProceed(userId, Factory(_type, 0, now));
+        return _paymentProceed(userId, Factory(_type, 0, now));
     }
 
+    /// @notice buy wood factory
+    /// @dev wrapper over buyFactory for FactoryType.Wood
+    /// @return id of new factory
     function buyWoodFactory() public payable returns (uint256) {
         return buyFactory(FactoryType.Wood);
     }
 
+    /// @notice buy wood factory
+    /// @dev wrapper over buyFactory for FactoryType.Metal
+    /// @return id of new factory
     function buyMetalFactory() public payable returns (uint256) {
         return buyFactory(FactoryType.Metal);
     }
 
+    /// @notice buy wood factory
+    /// @dev wrapper over buyFactory for FactoryType.Oil
+    /// @return id of new factory
     function buyOilFactory() public payable returns (uint256) {
         return buyFactory(FactoryType.Oil);
     }
 
+    /// @notice buy wood factory
+    /// @dev wrapper over buyFactory for FactoryType.PreciousMetal
+    /// @return id of new factory
     function buyPreciousMetal() public payable returns (uint256) {
         return buyFactory(FactoryType.PreciousMetal);
     }
 
+    /// @notice distribute investment when user buy anything
+    /// @param _value value of investment
     function _distributeInvestment(uint256 _value) private {
         developers.transfer(msg.value * developersPercent / 100);
     }
 
-    function _paymentProceed(uint256 _userId, Factory _factory) private {
+    /// @notice function of proceed payment
+    /// @dev for only buy new factory
+    /// @return id of new factory
+    function _paymentProceed(uint256 _userId, Factory _factory) private returns(uint256) {
         User storage user = users[_userId];
 
         require(_checkPayment(user, _factory.ftype, _factory.level));
@@ -338,8 +380,11 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         _distributeReferrers(_userId, price);
 
         emit PaymentProceed(_userId, index, _factory.ftype, price);
+        return index;
     }
 
+    /// @notice check available investment
+    /// @return true if user does enough balance for investment
     function _checkPayment(User _user, FactoryType _type, uint8 _level) private view returns(bool) {
         uint256 totalBalance = _user.balance.add(msg.value);
 
@@ -348,7 +393,8 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         return true;
     }
 
-
+    /// @notice level up for factory
+    /// @param _factoryId id of factory
     function levelUp(uint256 _factoryId) public payable {
         Factory storage factory = factories[_factoryId];
         uint256 price = getPrice(factory.ftype, factory.level + 1);
@@ -370,7 +416,9 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         emit LevelUp(_factoryId, factory.level, userId);
     }
 
-
+    /// @notice sell resources of user with type
+    /// @param _type type of resources
+    /// @return sum of sell
     function sellResources(uint8 _type) public returns (uint256) {
         uint256 userId = addressToUser[msg.sender];
         uint256 sum = Math.min(users[userId].resources[_type] * getResourcePrice(_type), address(this).balance);
@@ -379,28 +427,45 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         msg.sender.transfer(sum);
 
         emit Sell(userId, _type, sum);
+        return sum;
     }
 
-
+    /// @notice function for compute worktime factory
+    /// @param _collected_at timestamp of start
+    /// @return duration minutes
     function worktimeAtDate(uint256 _collected_at) public view returns(uint256) {
         return (now - _collected_at) / 60;
     }
 
+    /// @notice function for compute duration work factory
+    /// @param _factoryId id of factory
+    /// @return timestamp of duration
     function worktime(uint256 _factoryId) public view returns(uint256) {
         return worktimeAtDate(factories[_factoryId].collected_at);
     }
 
-
+    /// @notice function for compute resource factory at time
+    /// @param _type type of factory
+    /// @param _level level of factory
+    /// @param _collected_at timestamp for collect
+    /// @return count of resources
     function _resourcesAtTime(FactoryType _type, uint8 _level, uint256 _collected_at) public view returns(uint256) {
         return worktimeAtDate(_collected_at) * (getProductsPerMinute(_type, _level) + getBonusPerMinute(_type, _level));
     }
 
+    /// @notice function for compute resource factory at time
+    /// @dev wrapper over _resourcesAtTime
+    /// @param _factoryId id of factory
+    /// @return count of resources
     function resourcesAtTime(uint256 _factoryId) public view returns(uint256) {
         Factory storage factory = factories[_factoryId];
         return _resourcesAtTime(factory.ftype, factory.level, factory.collected_at);
     }
 
-
+    /// @notice function for collect resource
+    /// @param _factory factory object
+    /// @param _user user object
+    /// @return count of resources
     function _collectResource(Factory storage _factory, User storage _user) internal returns(uint256) {
         uint256 resources = _resourcesAtTime(_factory.ftype, _factory.level, _factory.collected_at);
         _user.resources[uint8(_factory.ftype)] = _user.resources[uint8(_factory.ftype)].add(resources);
@@ -410,6 +475,8 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem {
         return resources;
     }
 
+    /// @notice function for collect all resources from all factories
+    /// @dev wrapper over _collectResource
     function collectResources() public onlyExistingUser {
         uint256 index = addressToUser[msg.sender];
         User storage user = users[index];
