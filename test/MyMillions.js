@@ -381,7 +381,7 @@ contract('MyMillions', function(accounts) {
         // check change balance of user0
         let user0_new_balance = web3.eth.getBalance(user0).toNumber();
         let profit = user0_new_balance - user0_balance;
-        assert(profit >= resourceSum * ppm)
+        assert(profit >= resourceSum * ppm);
 
         // check resources of user
         let user0_info = getUser(await myMillions.userInfo(user0_id));
