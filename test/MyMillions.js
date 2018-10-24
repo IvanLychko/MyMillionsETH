@@ -375,12 +375,12 @@ contract('MyMillions', function(accounts) {
         let factory0_id = 0;
 
         // execute with zero gas price
-        let collect_tx = await myMillions.collectResources({from: user0, gasPrice: 0});
-        let sell_tx = await myMillions.sellResources(0, {from: user0, gasPrice: 0});
+        let collect_tx = await myMillions.collectResources({from: user0, gasPrice: 1});
+        let sell_tx = await myMillions.sellResources(0, {from: user0, gasPrice: 1});
 
         // check change balance of user0
         let user0_new_balance = web3.eth.getBalance(user0).toNumber();
-        let profit = user0_new_balance - user0_balance;
+        let profit = user0_new_balance - user0_balance + collect_tx.receipt.cumulativeGasUsed * 2 + sell_tx.receipt.cumulativeGasUsed * 2;
         assert(profit >= resourceSum * ppm);
 
         // check resources of user
