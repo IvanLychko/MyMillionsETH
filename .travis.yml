@@ -8,7 +8,7 @@ install:
   - npm install -g ganache-cli
   - npm install
 script:
-  - truffle test
+  - npm test
 before_script:
   - sh scripts/rpc.sh &
   - sleep 5

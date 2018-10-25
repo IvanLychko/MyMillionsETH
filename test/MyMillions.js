@@ -8,6 +8,7 @@ const should = require('chai')
 import expectThrow from './helpers/expectThrow';
 
 var MyMillions = artifacts.require('./MyMillions.sol');
+var MyMillions = artifacts.require('./MyMillions.sol');
 
 const minute = 60;
 const hour = 60 * minute;
@@ -36,6 +37,9 @@ const setNextBlockDelay = function(duration) {
 
 
 function getUser(user) {
+    if (user == undefined)
+        return undefined;
+
     return {
         addr: user[0],
         balance: user[1].toNumber(),
@@ -46,14 +50,24 @@ function getUser(user) {
 }
 
 function getFactory(factory) {
-    if (factory == undefined) {
+    if (factory == undefined)
         return undefined;
-    }
 
     return {
         ftype: factory[0].toNumber(),
         level: factory[1].toNumber(),
         collected_at: factory[2].toNumber()
+    }
+}
+
+function getLeadersTable(table) {
+    if (table == undefined)
+        return undefined;
+
+    return {
+        timestampEnd: table[0].toNumber(),
+        duration: table[1].toNumber(),
+        minSum: table[2].toNumber()
     }
 }
 
@@ -188,6 +202,13 @@ contract('MyMillions', function(accounts) {
 
         let user0_info = getUser(await myMillions.userInfo(user0_id));
         expect(user0_info.balance.toString()).to.equal(sum);
+
+        let leaders = await myMillions.getLeaders(0);
+        let addresses = leaders[0];
+        let balance = leaders[1].map(x => x.toNumber());
+
+        expect(addresses[0]).to.equal(user0);
+        expect(balance[0].toString()).to.equal(sum);
     });
 
     it('buy wood factory', async function () {
@@ -386,6 +407,49 @@ contract('MyMillions', function(accounts) {
         // check resources of user
         let user0_info = getUser(await myMillions.userInfo(user0_id));
         expect(user0_info.resources[0]).to.equal(0);
+    });
+
+    it('leaders update', async function () {
+        // register and deposit all user before tests
+        let leadersCount = (await myMillions.leadersCount()).toNumber();
+        let sum = web3.toWei(1, 'ether');
+        for (var i = 0; i < leadersCount; i++) {
+            await myMillions.register({from: accounts[i]});
+            await myMillions.deposit({from: accounts[i], value: sum * (leadersCount - i)});
+        }
+
+        // check momental leaders tables
+        for (var i = 0; i < 4; i++) {
+            let leaders = await myMillions.getLeaders(i);
+            let addresses = leaders[0];
+            let balance = leaders[1].map(x => x.toNumber());
+
+            for (var j = 0; j < addresses.length; j++) {
+                expect(addresses[j]).to.equal(accounts[j]);
+                expect(balance[j]).to.equal(sum * (addresses.length - j));
+            }
+        }
+    });
+
+    it('leaders table closing', async function () {
+        let leadersTable0_info = getLeadersTable(await myMillions.getLeadersTableInfo(0));
+
+        let sum = web3.toWei(1, 'ether');
+        await myMillions.register({from: accounts[0]});
+        await myMillions.deposit({from: accounts[0], value: sum});
+
+        await myMillions.register({from: accounts[1]});
+        await setNextBlockDelay(leadersTable0_info.duration);
+        await myMillions.deposit({from: accounts[1], value: sum});
+
+        let leaders = await myMillions.getLeaders(0);
+        let addresses = leaders[0];
+        let balance = leaders[1].map(x => x.toNumber());
+
+        expect(addresses[0]).to.equal(accounts[1]);
+        expect(addresses[1]).to.equal('0x0000000000000000000000000000000000000000');
+        expect(balance[0].toString()).to.equal(sum);
+        expect(balance[1]).to.equal(0);
     });
 
 });

@@ -6,7 +6,9 @@ module.exports = {
 		development: {
 			host: "127.0.0.1",
 			port: 7545,
-			network_id: "*"
+			network_id: "3",
+			gas: 7984452,
+			gasPrice: 1
 		},
 		live: {
 			host: "0.0.0.0",
