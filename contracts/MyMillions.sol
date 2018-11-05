@@ -321,6 +321,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     /// @param _newUserId the ID of the new user
     /// @param _refUserId the ID of the user who gets the affiliate fee
     function _updateReferrals(uint256 _newUserId, uint256 _refUserId) private {
+        if (_newUserId == _refUserId) return;
         users[_newUserId].referrersByLevel[0] = _refUserId;
 
         for (uint i = 1; i < referralLevelsCount; i++) {
