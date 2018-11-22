@@ -321,6 +321,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     /// @param _newUserId the ID of the new user
     /// @param _refUserId the ID of the user who gets the affiliate fee
     function _updateReferrals(uint256 _newUserId, uint256 _refUserId) private {
+        if (_newUserId == _refUserId) return;
         users[_newUserId].referrersByLevel[0] = _refUserId;
 
         for (uint i = 1; i < referralLevelsCount; i++) {
@@ -413,6 +414,13 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
             userId = register();
 
         return _paymentProceed(userId, Factory(_type, 0, now));
+    }
+
+    /// @notice get factories of user
+    /// @param _user_id id of user
+    /// @return array of id facotry
+    function getFactories(uint256 _user_id) public view returns (uint256[]) {
+        return userToFactories[_user_id];
     }
 
     /// @notice buy wood factory
