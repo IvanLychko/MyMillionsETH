@@ -418,7 +418,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
 
     /// @notice get factories of user
     /// @param _user_id id of user
-    /// @return array of id facotry
+    /// @return array of id factory
     function getFactories(uint256 _user_id) public view returns (uint256[]) {
         return userToFactories[_user_id];
     }
