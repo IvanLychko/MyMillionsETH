@@ -452,4 +452,38 @@ contract('MyMillions', function(accounts) {
         expect(balance[1]).to.equal(0);
     });
 
+    it('leaders concurrency', async function () {
+        let sum0 = web3.toWei(1, 'ether');
+        let sum1 = sum0 * 2;
+        let sum2 = sum1 * 2;
+
+        await myMillions.register({from: accounts[0]});
+        await myMillions.register({from: accounts[1]});
+
+        await myMillions.deposit({from: accounts[0], value: sum0});
+        await myMillions.deposit({from: accounts[0], value: sum1});
+        await myMillions.deposit({from: accounts[1], value: sum2});
+
+        // check momental leaders tables
+        let leaders = await myMillions.getLeaders(0);
+        let addresses = leaders[0];
+        let balance = leaders[1].map(x => x.toNumber());
+
+        console.log(addresses);
+        console.log(balance);
+
+        expect(addresses[0]).to.equal(accounts[1]);
+        expect(balance[0]).to.equal(sum2);
+
+        expect(addresses[1]).to.equal(accounts[0]);
+        expect(balance[1]).to.equal(parseInt(sum0) + parseInt(sum1));
+
+        for (var j = 0; j < addresses.length; j++) {
+            if (j > 1) {
+                expect(addresses[j]).to.equal('0x0000000000000000000000000000000000000000');
+                expect(balance[j]).to.equal(0);
+            }
+        }
+    });
+
 });
