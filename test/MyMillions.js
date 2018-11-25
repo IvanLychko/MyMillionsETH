@@ -436,10 +436,11 @@ contract('MyMillions', function(accounts) {
 
         let sum = web3.toWei(1, 'ether');
         await myMillions.register({from: accounts[0]});
+        await myMillions.register({from: accounts[1]});
+
         await myMillions.deposit({from: accounts[0], value: sum});
 
-        await myMillions.register({from: accounts[1]});
-        await setNextBlockDelay(leadersTable0_info.duration);
+        await setNextBlockDelay(leadersTable0_info.duration + 2);
         await myMillions.deposit({from: accounts[1], value: sum});
 
         let leaders = await myMillions.getLeaders(0);
@@ -452,7 +453,7 @@ contract('MyMillions', function(accounts) {
         expect(balance[1]).to.equal(0);
     });
 
-    it('leaders concurrency', async function () {
+    it('leaders simple concurrency', async function () {
         let sum0 = web3.toWei(1, 'ether');
         let sum1 = sum0 * 2;
         let sum2 = sum1 * 2;
@@ -469,20 +470,63 @@ contract('MyMillions', function(accounts) {
         let addresses = leaders[0];
         let balance = leaders[1].map(x => x.toNumber());
 
-        console.log(addresses);
-        console.log(balance);
-
         expect(addresses[0]).to.equal(accounts[1]);
         expect(balance[0]).to.equal(sum2);
 
         expect(addresses[1]).to.equal(accounts[0]);
         expect(balance[1]).to.equal(parseInt(sum0) + parseInt(sum1));
 
-        for (var j = 0; j < addresses.length; j++) {
-            if (j > 1) {
-                expect(addresses[j]).to.equal('0x0000000000000000000000000000000000000000');
-                expect(balance[j]).to.equal(0);
-            }
+        for (var j = 2; j < addresses.length; j++) {
+            expect(addresses[j]).to.equal('0x0000000000000000000000000000000000000000');
+            expect(balance[j]).to.equal(0);
+        }
+    });
+
+    it('leaders concurrency', async function () {
+        let leadersCount = (await myMillions.leadersCount()).toNumber();
+        let sums = [
+            web3.toWei(1, 'ether')
+        ]
+
+        await myMillions.register({from: accounts[0]});
+        for (var i = 1; i < leadersCount + 1; i++) {
+            sums.push(sums[i - 1] * 2);
+
+            await myMillions.register({from: accounts[i]});
+        }
+
+        var wins = Array.apply(null, Array(leadersCount)).map(Number.prototype.valueOf,0);
+
+        await myMillions.deposit({from: accounts[0], value: sums[0]}); wins[0] += parseInt(sums[0]);
+        await myMillions.deposit({from: accounts[0], value: sums[1]}); wins[0] += parseInt(sums[1]);
+        await myMillions.deposit({from: accounts[1], value: sums[3]}); wins[1] += parseInt(sums[3]);
+        await myMillions.deposit({from: accounts[2], value: sums[1]}); wins[2] += parseInt(sums[1]);
+        await myMillions.deposit({from: accounts[3], value: sums[1]}); wins[3] += parseInt(sums[1]);
+        await myMillions.deposit({from: accounts[4], value: sums[2]}); wins[4] += parseInt(sums[2]);
+        await myMillions.deposit({from: accounts[5], value: sums[1]}); wins[5] += parseInt(sums[1]);
+        await myMillions.deposit({from: accounts[6], value: sums[4]}); wins[6] += parseInt(sums[4]);
+        await myMillions.deposit({from: accounts[0], value: sums[5]}); wins[0] += parseInt(sums[5]);
+
+        let winAddresses = [
+            accounts[0],
+            accounts[6],
+            accounts[1],
+            accounts[4],
+            accounts[2],
+            accounts[3],
+            accounts[5]
+        ]
+
+        // check momental leaders tables
+        let leaders = await myMillions.getLeaders(0);
+        let addresses = leaders[0];
+        let balance = leaders[1].map(x => x.toNumber());
+
+        wins = wins.sort((a, b) => b - a);
+
+        for (var i = 0; i < addresses.length; i++) {
+            expect(addresses[i]).to.equal(winAddresses[i]);
+            expect(wins[i]).to.equal(balance[i]);
         }
     });
 

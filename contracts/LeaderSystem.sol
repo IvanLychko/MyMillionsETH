@@ -8,8 +8,6 @@ contract LeaderSystem {
 
     event NewLeader(uint256 _indexTable, address _addr, uint256 _index, uint256 _sum);
     event LeadersClear(uint256 _indexTable);
-    event Test(uint256 _i);
-    event Addr(address _a, uint256 _sum);
 
     uint8 public constant leadersCount = 7;
     mapping (uint8 => uint256) public leaderBonuses;
@@ -67,7 +65,7 @@ contract LeaderSystem {
             uint ja = j;
             if (isAdded) {
                 ja--;
-//                if (isExist) ja++;
+                if (isExist) ja++;
             }
 
             if (leadersUser[j] == 0x0) {
@@ -75,13 +73,9 @@ contract LeaderSystem {
                     isAdded = true;
                     result[newCount] = _addr;
 
-                    emit Test(0);
                     emit NewLeader(i, _addr, newCount, newSum);
                 }
-                else {
-                    result[newCount] = leadersUser[ja];
-                    emit Test(4);
-                }
+                else result[newCount] = leadersUser[ja];
 
                 newCount++;
                 break;
@@ -92,14 +86,12 @@ contract LeaderSystem {
                     isExist = true;
                     result[newCount] = leadersUser[j - 1];
                     newCount++;
-                    emit Test(31);
                 }
                 else {
                     isAdded = true;
                     result[newCount] = _addr;
-//                    newCount++;
                 }
-                emit Test(3);
+
                 continue;
             }
 
@@ -107,36 +99,26 @@ contract LeaderSystem {
                 isAdded = true;
                 result[newCount] = _addr;
 
-                emit Test(1);
                 emit NewLeader(i, _addr, newCount, newSum);
             }
             else {
                 result[newCount] = leadersUser[ja];
-                emit Test(2);
             }
 
             newCount++;
         }
 
         if (j >= newLength && isAdded) {
-            result[newLength - 1] = leadersUser[newLength - 2];
+            result[newLength - 1] = leadersUser[newLength - 1];
         }
-
-        emit Addr(result[0], leader.users[result[0]]);
-        emit Addr(result[1], leader.users[result[1]]);
-        emit Addr(result[2], leader.users[result[2]]);
-        emit Addr(result[3], leader.users[result[3]]);
-        emit Addr(result[4], leader.users[result[4]]);
-        emit Addr(result[5], leader.users[result[5]]);
-        emit Addr(result[6], leader.users[result[6]]);
 
         leader.leaders = result;
     }
 
     function _updateLeaders(address _addr, uint256 _value) internal {
-//        for (uint i = 0; i < leaders.length; i++) {
-            _updateLeadersTable(0, _addr, _value);
-//        }
+        for (uint i = 0; i < leaders.length; i++) {
+            _updateLeadersTable(i, _addr, _value);
+        }
     }
 
     function getLeadersTableInfo(uint256 _indexTable) public view returns(uint256, uint256, uint256) {
