@@ -87,6 +87,7 @@ contract('MyMillions', function(accounts) {
 
     beforeEach('setup contract for each test', async function () {
         myMillions = await MyMillions.new({from: owner});
+        await myMillions.setup({from: owner});
     });
 
     it('has an owner', async function () {
@@ -167,7 +168,7 @@ contract('MyMillions', function(accounts) {
         // buy factory with referral distribution
         let last_user_id = users_count;
         let sum = (await myMillions.getPrice(0, 0)).toNumber();
-        await myMillions.buyWoodFactory({from: accounts[last_user_id], value: sum});
+        await myMillions.buyFactory(0, {from: accounts[last_user_id], value: sum});
 
         let firsty_percents = (await myMillions.getReferralPercentsByIndex(0)).map(x => x.toNumber());
         let loyalty_percents = (await myMillions.getReferralPercentsByIndex(1)).map(x => x.toNumber());
@@ -218,7 +219,7 @@ contract('MyMillions', function(accounts) {
 
         // register with buy wood factory
         await myMillions.register({from: user0});
-        await myMillions.buyWoodFactory({from: user0, value: sum});
+        await myMillions.buyFactory(0, {from: user0, value: sum});
 
         // get factory
         let factory0_id = 0;
@@ -239,9 +240,9 @@ contract('MyMillions', function(accounts) {
         await myMillions.register({from: user0, value: sum * 0.5});
 
         // buy without sum
-        await expectThrow(myMillions.buyWoodFactory({from: user0}));
+        await expectThrow(myMillions.buyFactory(0, {from: user0}));
 
-        await myMillions.buyWoodFactory({from: user0, value: sum * 0.5});
+        await myMillions.buyFactory(0, {from: user0, value: sum * 0.5});
 
         // get factory
         let factory0_id = 0;
@@ -256,7 +257,7 @@ contract('MyMillions', function(accounts) {
 
         // register with buy wood factory
         await myMillions.register({from: user0, value: sum});
-        await myMillions.buyWoodFactory({from: user0});
+        await myMillions.buyFactory(0, {from: user0});
 
         // get factory
         let factory0_id = 0;
@@ -272,7 +273,7 @@ contract('MyMillions', function(accounts) {
 
         // register with buy wood factory
         await myMillions.register({from: user0});
-        await myMillions.buyWoodFactory({from: user0, value: sum});
+        await myMillions.buyFactory(0, {from: user0, value: sum});
 
         // wait first minute
         await setNextBlockDelay(minute);
@@ -317,7 +318,7 @@ contract('MyMillions', function(accounts) {
         // register with buy wood factory
         let factory0_id = 0;
         await myMillions.register({from: user0});
-        await myMillions.buyWoodFactory({from: user0, value: sumLevel0});
+        await myMillions.buyFactory(0, {from: user0, value: sumLevel0});
 
         await setNextBlockDelay(minute);
         await myMillions.levelUp(factory0_id, {from: user0, value: 2 * sumLevel1});
@@ -385,7 +386,7 @@ contract('MyMillions', function(accounts) {
 
         // register with buy wood factory
         await myMillions.register({from: user0});
-        await myMillions.buyWoodFactory({from: user0, value: sum});
+        await myMillions.buyFactory(0, {from: user0, value: sum});
 
         // wait first minute
         await setNextBlockDelay(minute);
