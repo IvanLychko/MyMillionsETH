@@ -276,12 +276,6 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         return users[userId].balance;
     }
 
-    /// @notice getter for balance of user
-    /// @return balance value of user
-    function balanceOf() public view returns (uint256) {
-        return users[addressToUser[msg.sender]].balance;
-    }
-
     /// @notice getter for resources of user
     /// @return resources value of user
     function resoucesOf() public view returns (uint256[]) {
@@ -311,54 +305,6 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     function userInfo(uint256 _userId) public view returns(address, uint256, uint256, uint256[], uint256[]) {
         User memory user = users[_userId];
         return (user.addr, user.balance, user.totalPay, user.resources, user.referrersByLevel);
-    }
-
-    /// @notice mechanics of buying any factory
-    /// @param _type type of factory needed
-    /// @return id of new factory
-    function buyFactory(FactoryType _type) public payable returns (uint256) {
-        uint256 userId = addressToUser[msg.sender];
-
-        // if user not registered
-        if (addressToUser[msg.sender] == 0)
-            userId = register();
-
-        return _paymentProceed(userId, Factory(_type, 0, now));
-    }
-
-    /// @notice get factories of user
-    /// @param _user_id id of user
-    /// @return array of id factory
-    function getFactories(uint256 _user_id) public view returns (uint256[]) {
-        return userToFactories[_user_id];
-    }
-
-    /// @notice buy wood factory
-    /// @dev wrapper over buyFactory for FactoryType.Wood
-    /// @return id of new factory
-    function buyWoodFactory() public payable returns (uint256) {
-        return buyFactory(FactoryType.Wood);
-    }
-
-    /// @notice buy wood factory
-    /// @dev wrapper over buyFactory for FactoryType.Metal
-    /// @return id of new factory
-    function buyMetalFactory() public payable returns (uint256) {
-        return buyFactory(FactoryType.Metal);
-    }
-
-    /// @notice buy wood factory
-    /// @dev wrapper over buyFactory for FactoryType.Oil
-    /// @return id of new factory
-    function buyOilFactory() public payable returns (uint256) {
-        return buyFactory(FactoryType.Oil);
-    }
-
-    /// @notice buy wood factory
-    /// @dev wrapper over buyFactory for FactoryType.PreciousMetal
-    /// @return id of new factory
-    function buyPreciousMetal() public payable returns (uint256) {
-        return buyFactory(FactoryType.PreciousMetal);
     }
 
     /// @notice distribute investment when user buy anything
@@ -439,6 +385,15 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         emit Sell(userId, _type, sum);
         return sum;
     }
+
+    /// @notice sell all resources of user
+    /// @dev this is wrapper by sellResources for sell all types
+    function sellAllResources(uint8 _type) public {
+        for (uint8 i = 0; i <= uint8(FactoryType.PreciousMetal); i++) {
+            sellResources(i);
+        }
+    }
+
 
     /// @notice function for compute worktime factory
     /// @param _collected_at timestamp of start
