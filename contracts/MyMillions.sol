@@ -47,7 +47,7 @@ contract Improvements is Factoring {
         uint256 ppmBonus;   // bonus per minute
     }
 
-    function setupFactoringModule() internal {
+    function setupImprovementsModule() internal {
         // initial pricess
         levelStack[uint8(FactoryType.Wood)][0]          = Params(0.01 ether, 10, 0);
         levelStack[uint8(FactoryType.Metal)][0]         = Params(0.02 ether, 12, 0);
@@ -171,6 +171,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     event Sell(uint256 _userId, uint8 _type, uint256 _sum);
 
     bool isSetted = false;
+    uint256 public minSumDeposit = 0.01 ether;
 
     struct User {
         address addr;                                   // user address
@@ -208,6 +209,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         isSetted = true;
 
         setupFactoringModule();
+        setupImprovementsModule();
         setupReferralsSystemModule();
     }
 
@@ -275,6 +277,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     /// @notice deposit ethereum for user
     /// @return balance value of user
     function deposit() public payable returns(uint256) {
+        require(msg.value > minSumDeposit, "Deposit does not enough");
         uint256 userId = addressToUser[msg.sender];
         users[userId].balance = users[userId].balance.add(msg.value);
 
