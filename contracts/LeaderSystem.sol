@@ -22,7 +22,7 @@ contract LeaderSystem {
 
     LeadersTable[] public leaders;
 
-    constructor() public {
+    function setupLeaderSystemModule() internal {
         leaderBonuses[0] = 10;  // 10%
         leaderBonuses[1] = 7;   // 7%
         leaderBonuses[2] = 5;   // 5%

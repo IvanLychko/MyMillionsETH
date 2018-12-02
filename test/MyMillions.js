@@ -269,7 +269,7 @@ contract('MyMillions', function(accounts) {
         let user0_id = 1;
         // get actual price for wood factory and ppm
         let sum = (await myMillions.getPrice(0, 0)).toNumber();
-        let ppm = (await myMillions.getProductsPerMinute(0, 0)).toNumber();
+        let ppm = (await myMillions.getProductsPerMinute(0, 0)).toNumber() / 100;
 
         // register with buy wood factory
         await myMillions.register({from: user0});
@@ -310,10 +310,10 @@ contract('MyMillions', function(accounts) {
         // get actual price for wood factory and ppm with bonus
         let sumLevel0 = (await myMillions.getPrice(0, 0)).toNumber();
         let sumLevel1 = (await myMillions.getPrice(0, 1)).toNumber();
-        let ppmLevel0 = (await myMillions.getProductsPerMinute(0, 0)).toNumber();
-        let ppmLevel1 = (await myMillions.getProductsPerMinute(0, 1)).toNumber();
-        let ppmBonusLevel0 = (await myMillions.getBonusPerMinute(0, 0)).toNumber();
-        let ppmBonusLevel1 = (await myMillions.getBonusPerMinute(0, 1)).toNumber();
+        let ppmLevel0 = (await myMillions.getProductsPerMinute(0, 0)).toNumber() / 100;
+        let ppmLevel1 = (await myMillions.getProductsPerMinute(0, 1)).toNumber() / 100;
+        let ppmBonusLevel0 = (await myMillions.getBonusPerMinute(0, 0)).toNumber() / 100;
+        let ppmBonusLevel1 = (await myMillions.getBonusPerMinute(0, 1)).toNumber() / 100;
 
         // register with buy wood factory
         let factory0_id = 0;
@@ -334,7 +334,8 @@ contract('MyMillions', function(accounts) {
         await setNextBlockDelay(minute);
         await myMillions.collectResources({from: user0});
         user0_info = getUser(await myMillions.userInfo(user0_id));
-        expect(user0_info.resources[0]).to.equal(ppmLevel0 + ppmBonusLevel0 + ppmLevel1 + ppmBonusLevel1);
+
+        expect(user0_info.resources[0]).to.equal(Math.round(ppmLevel0 + ppmBonusLevel0 + ppmLevel1 + ppmBonusLevel1));
 
         // check residual balance
         user0_info = getUser(await myMillions.userInfo(user0_id));
@@ -353,10 +354,10 @@ contract('MyMillions', function(accounts) {
         for (var i = 0; i < levelsCount; i++) {
             // get actual price for wood factory and ppm with bonus
             let sum = (await myMillions.getPrice(factory0_type, i)).toNumber();
-            let ppm = (await myMillions.getProductsPerMinute(factory0_type, i)).toNumber();
-            let ppmBonus = (await myMillions.getBonusPerMinute(factory0_type, i)).toNumber();
+            let ppm = (await myMillions.getProductsPerMinute(factory0_type, i)).toNumber() / 100;
+            let ppmBonus = (await myMillions.getBonusPerMinute(factory0_type, i)).toNumber() / 100;
 
-            totalProducts += ppm + ppmBonus;
+            totalProducts += Math.floor(ppm + ppmBonus);
 
             if (i == 0) {
                 await myMillions.buyFactory(factory0_type, {from: user0, value: sum});
@@ -378,11 +379,12 @@ contract('MyMillions', function(accounts) {
         let user0_id = 1;
         // get actual price for wood factory and ppm
         let sum = (await myMillions.getPrice(0, 0)).toNumber();
-        let ppm = (await myMillions.getProductsPerMinute(0, 0)).toNumber();
-        let resourceSum = (await myMillions.getResourcePrice(0)).toNumber();
+        let ppm = (await myMillions.getProductsPerMinute(0, 0)).toNumber() / 100;
+        let resourceSum = (await myMillions.getResourcePrice(0)).toNumber() / 100;
 
         // deploy new contract with enough cap
         myMillions = await MyMillions.new({from: owner, value: 2 * ppm * resourceSum});
+        await myMillions.setup({from: owner});
 
         // register with buy wood factory
         await myMillions.register({from: user0});

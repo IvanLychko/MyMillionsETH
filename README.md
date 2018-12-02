@@ -1,13 +1,13 @@
 # MyMillions
 
-[![Build Status](https://travis-ci.org/MyMillionsETH/MyMillionsETH.svg?branch=develop)](https://travis-ci.org/MyMillionsETH/MyMillionsETH)
+[![Build Status](https://travis-ci.org/MyMillionsETH/MyMillionsETH.svg)](https://travis-ci.org/MyMillionsETH/MyMillionsETH)
 
 Smart contracts for MyMillions ecosystem.
 Safely platform for investing.
 
 # Deploying contracts
 
-RinkeBy: [0x699f850af749563e65bf8c8dbb552c5b8c4f8fdc](https://rinkeby.etherscan.io/address/0x699f850af749563e65bf8c8dbb552c5b8c4f8fdc)
+RinkeBy: [0xa365730f434c5112c1138076997bb6e5e0d1a127](https://rinkeby.etherscan.io/address/0xa365730f434c5112c1138076997bb6e5e0d1a127)
 
 # Test
 1. Install [truffle](http://truffleframework.com) globally with `npm install -g truffle`

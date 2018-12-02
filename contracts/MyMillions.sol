@@ -24,10 +24,10 @@ contract Factoring {
     mapping (uint8 => uint256) public resourcePrices;
 
     function setupFactoringModule() internal {
-        resourcePrices[uint8(FactoryType.Wood)]         = 0.1 ether;
-        resourcePrices[uint8(FactoryType.Metal)]        = 0.2 ether;
-        resourcePrices[uint8(FactoryType.Oil)]          = 0.3 ether;
-        resourcePrices[uint8(FactoryType.PreciousMetal)]= 0.4 ether;
+        resourcePrices[uint8(FactoryType.Wood)]         = 0.02315 szabo;
+        resourcePrices[uint8(FactoryType.Metal)]        = 0.03646 szabo;
+        resourcePrices[uint8(FactoryType.Oil)]          = 0.04244 szabo;
+        resourcePrices[uint8(FactoryType.PreciousMetal)]= 0.06655 szabo;
     }
 
     function getResourcePrice(uint8 _type) public view returns(uint256) {
@@ -49,46 +49,46 @@ contract Improvements is Factoring {
 
     function setupImprovementsModule() internal {
         // initial pricess
-        levelStack[uint8(FactoryType.Wood)][0]          = Params(0.01 ether, 10, 0);
-        levelStack[uint8(FactoryType.Metal)][0]         = Params(0.02 ether, 12, 0);
-        levelStack[uint8(FactoryType.Oil)][0]           = Params(0.03 ether, 14, 0);
-        levelStack[uint8(FactoryType.PreciousMetal)][0] = Params(0.04 ether, 16, 0);
+        levelStack[uint8(FactoryType.Wood)][0]          = Params(0.01 ether, 200, 0);
+        levelStack[uint8(FactoryType.Metal)][0]         = Params(0.03 ether, 400, 0);
+        levelStack[uint8(FactoryType.Oil)][0]           = Params(0.05 ether, 600, 0);
+        levelStack[uint8(FactoryType.PreciousMetal)][0] = Params(0.10 ether, 800, 0);
 
         // level 1
-        levelStack[uint8(FactoryType.Wood)][1]          = Params(0.05 ether, 20, 1);
-        levelStack[uint8(FactoryType.Metal)][1]         = Params(0.10 ether, 22, 2);
-        levelStack[uint8(FactoryType.Oil)][1]           = Params(0.15 ether, 24, 3);
-        levelStack[uint8(FactoryType.PreciousMetal)][1] = Params(0.20 ether, 26, 4);
+        levelStack[uint8(FactoryType.Wood)][1]          = Params(0.05 ether, 1200, 120);
+        levelStack[uint8(FactoryType.Metal)][1]         = Params(0.09 ether, 1600, 138);
+        levelStack[uint8(FactoryType.Oil)][1]           = Params(0.15 ether, 2400, 164);
+        levelStack[uint8(FactoryType.PreciousMetal)][1] = Params(0.50 ether, 4800, 418);
 
         // level 2
-        levelStack[uint8(FactoryType.Wood)][2]          = Params(0.10 ether, 30, 2);
-        levelStack[uint8(FactoryType.Metal)][2]         = Params(0.20 ether, 32, 3);
-        levelStack[uint8(FactoryType.Oil)][2]           = Params(0.30 ether, 34, 4);
-        levelStack[uint8(FactoryType.PreciousMetal)][2] = Params(0.40 ether, 36, 5);
+        levelStack[uint8(FactoryType.Wood)][2]          = Params(0.12 ether, 3600, 540);
+        levelStack[uint8(FactoryType.Metal)][2]         = Params(0.27 ether, 5200, 866);
+        levelStack[uint8(FactoryType.Oil)][2]           = Params(0.35 ether, 6600, 1050);
+        levelStack[uint8(FactoryType.PreciousMetal)][2] = Params(1.00 ether, 12800, 1670);
 
         // level 3
-        levelStack[uint8(FactoryType.Wood)][3]          = Params(0.2 ether, 40, 3);
-        levelStack[uint8(FactoryType.Metal)][3]         = Params(0.4 ether, 42, 4);
-        levelStack[uint8(FactoryType.Oil)][3]           = Params(0.6 ether, 44, 5);
-        levelStack[uint8(FactoryType.PreciousMetal)][3] = Params(0.8 ether, 46, 6);
+        levelStack[uint8(FactoryType.Wood)][3]          = Params(0.30 ether, 9600, 2400);
+        levelStack[uint8(FactoryType.Metal)][3]         = Params(0.75 ether, 15200, 3980);
+        levelStack[uint8(FactoryType.Oil)][3]           = Params(1.15 ether, 20400, 5099);
+        levelStack[uint8(FactoryType.PreciousMetal)][3] = Params(3.50 ether, 40800, 11531);
 
         // level 4
-        levelStack[uint8(FactoryType.Wood)][4]          = Params(0.4 ether, 50, 4);
-        levelStack[uint8(FactoryType.Metal)][4]         = Params(0.8 ether, 52, 5);
-        levelStack[uint8(FactoryType.Oil)][4]           = Params(1.2 ether, 54, 6);
-        levelStack[uint8(FactoryType.PreciousMetal)][4] = Params(1.6 ether, 56, 7);
+        levelStack[uint8(FactoryType.Wood)][4]          = Params(0.90 ether, 27600, 9660);
+        levelStack[uint8(FactoryType.Metal)][4]         = Params(2.13 ether, 43600, 15568);
+        levelStack[uint8(FactoryType.Oil)][4]           = Params(3.00 ether, 56400, 17943);
+        levelStack[uint8(FactoryType.PreciousMetal)][4] = Params(7.00 ether, 96800, 31567);
 
         // level 5
-        levelStack[uint8(FactoryType.Wood)][5]          = Params(0.8 ether, 60, 5);
-        levelStack[uint8(FactoryType.Metal)][5]         = Params(1.6 ether, 62, 6);
-        levelStack[uint8(FactoryType.Oil)][5]           = Params(2.4 ether, 64, 7);
-        levelStack[uint8(FactoryType.PreciousMetal)][5] = Params(3.2 ether, 66, 8);
+        levelStack[uint8(FactoryType.Wood)][5]          = Params(1.80 ether, 63600, 25440);
+        levelStack[uint8(FactoryType.Metal)][5]         = Params(5.31 ether, 114400, 49022);
+        levelStack[uint8(FactoryType.Oil)][5]           = Params(7.30 ether, 144000, 55629);
+        levelStack[uint8(FactoryType.PreciousMetal)][5] = Params(17.10 ether, 233600, 96492);
 
         // level 6
-        levelStack[uint8(FactoryType.Wood)][6]          = Params(1.6 ether, 70, 6);
-        levelStack[uint8(FactoryType.Metal)][6]         = Params(3.2 ether, 72, 7);
-        levelStack[uint8(FactoryType.Oil)][6]           = Params(4.8 ether, 74, 8);
-        levelStack[uint8(FactoryType.PreciousMetal)][6] = Params(6.4 ether, 76, 9);
+        levelStack[uint8(FactoryType.Wood)][6]          = Params(5.40 ether, 171600, 85800);
+        levelStack[uint8(FactoryType.Metal)][6]         = Params(13.89 ether, 298400, 158120);
+        levelStack[uint8(FactoryType.Oil)][6]           = Params(24.45 ether, 437400, 218674);
+        levelStack[uint8(FactoryType.PreciousMetal)][6] = Params(55.50 ether, 677600, 353545);
     }
 
     function getPrice(FactoryType _type, uint8 _level) public view returns(uint256) {
@@ -177,6 +177,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         address addr;                                   // user address
         uint256 balance;                                // balance of account
         uint256 totalPay;                               // sum of all input pay
+        uint256 referrersReceived;                      // total deposit from referrals
         uint256[] resources;                            // collected resources
         uint256[] referrersByLevel;                     // referrers user ids
         mapping (uint8 => uint256[]) referralsByLevel;  // all referrals user ids
@@ -186,9 +187,9 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     mapping (address => uint256) public addressToUser;
 
     struct Factory {
-        FactoryType ftype;  // factory type
-        uint8 level;        // factory level
-        uint256 collected_at; // timestamp updated
+        FactoryType ftype;      // factory type
+        uint8 level;            // factory level
+        uint256 collected_at;   // timestamp updated
     }
 
     Factory[] public factories;
@@ -201,7 +202,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     }
 
     constructor() public payable {
-        users.push(User(0x0, 0, 0, new uint256[](4), new uint256[](referralLevelsCount)));  // for find by addressToUser map
+        users.push(User(0x0, 0, 0, 0, new uint256[](4), new uint256[](referralLevelsCount)));  // for find by addressToUser map
     }
 
     function setup() public onlyOwner {
@@ -211,6 +212,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         setupFactoringModule();
         setupImprovementsModule();
         setupReferralsSystemModule();
+        setupLeaderSystemModule();
     }
 
     // @dev register for only new users with min pay
@@ -218,7 +220,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     function register() public payable returns(uint256) {
         require(addressToUser[msg.sender] == 0);
 
-        uint256 index = users.push(User(msg.sender, msg.value, 0, new uint256[](4), new uint256[](referralLevelsCount))) - 1;
+        uint256 index = users.push(User(msg.sender, msg.value, 0, 0, new uint256[](4), new uint256[](referralLevelsCount))) - 1;
         addressToUser[msg.sender] = index;
 
         emit CreateUser(index, msg.sender, msg.value);
@@ -269,6 +271,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
 
             uint256 value = _sum * percents[i] / 10000;
             users[referrers[i]].balance = users[referrers[i]].balance.add(value);
+            users[referrers[i]].referrersReceived = users[referrers[i]].referrersReceived.add(value);
 
             emit ReferrerDistribute(_userId, referrers[i], value);
         }
@@ -473,7 +476,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     /// @param _collected_at timestamp for collect
     /// @return count of resources
     function _resourcesAtTime(FactoryType _type, uint8 _level, uint256 _collected_at) public view returns(uint256) {
-        return worktimeAtDate(_collected_at) * (getProductsPerMinute(_type, _level) + getBonusPerMinute(_type, _level));
+        return worktimeAtDate(_collected_at) * (getProductsPerMinute(_type, _level) + getBonusPerMinute(_type, _level)) / 100;
     }
 
     /// @notice function for compute resource factory at time
