@@ -44,8 +44,9 @@ function getUser(user) {
         addr: user[0],
         balance: user[1].toNumber(),
         totalPay: user[2].toNumber(),
-        resources: user[3].map(x => x.toNumber()),
-        referrers: user[4].map(x => x.toNumber())
+        referrersReceived: user[3].toNumber(),
+        resources: user[4].map(x => x.toNumber()),
+        referrers: user[5].map(x => x.toNumber())
     }
 }
 

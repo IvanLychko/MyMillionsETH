@@ -324,9 +324,9 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     /// @return totalPay of user
     /// @return array of resources user
     /// @return array of referrers id user
-    function userInfo(uint256 _userId) public view returns(address, uint256, uint256, uint256[], uint256[]) {
+    function userInfo(uint256 _userId) public view returns(address, uint256, uint256, uint256, uint256[], uint256[]) {
         User memory user = users[_userId];
-        return (user.addr, user.balance, user.totalPay, user.resources, user.referrersByLevel);
+        return (user.addr, user.balance, user.totalPay, user.referrersReceived, user.resources, user.referrersByLevel);
     }
 
     /// @notice mechanics of buying any factory
