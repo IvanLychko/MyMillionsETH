@@ -439,6 +439,8 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         _collectResource(factory, user);
         factory.level++;
 
+        _updateLeaders(msg.sender, msg.value);
+
         emit LevelUp(_factoryId, factory.level, userId);
     }
 
