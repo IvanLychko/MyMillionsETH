@@ -200,6 +200,10 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         require(addressToUser[msg.sender] != 0);
         _;
     }
+    modifier onlyNotExistingUser() {
+        require(addressToUser[msg.sender] == 0);
+        _;
+    }
 
     constructor() public payable {
         users.push(User(0x0, 0, 0, 0, new uint256[](4), new uint256[](referralLevelsCount)));  // for find by addressToUser map
@@ -217,7 +221,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
 
     // @dev register for only new users with min pay
     /// @return id of new user
-    function register() public payable returns(uint256) {
+    function register() public payable onlyNotExistingUser returns(uint256) {
         require(addressToUser[msg.sender] == 0);
 
         uint256 index = users.push(User(msg.sender, msg.value, 0, 0, new uint256[](4), new uint256[](referralLevelsCount))) - 1;
@@ -231,7 +235,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     /// @notice just registry by referral link
     /// @param _refId the ID of the user who gets the affiliate fee
     /// @return id of new user
-    function registerWithRefID(uint256 _refId) public payable returns(uint256) {
+    function registerWithRefID(uint256 _refId) public payable onlyNotExistingUser returns(uint256) {
         require(_refId < users.length);
 
         uint256 index = register();
@@ -279,7 +283,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
 
     /// @notice deposit ethereum for user
     /// @return balance value of user
-    function deposit() public payable returns(uint256) {
+    function deposit() public payable onlyExistingUser returns(uint256) {
         require(msg.value > minSumDeposit, "Deposit does not enough");
         uint256 userId = addressToUser[msg.sender];
         users[userId].balance = users[userId].balance.add(msg.value);
@@ -332,7 +336,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     /// @notice mechanics of buying any factory
     /// @param _type type of factory needed
     /// @return id of new factory
-    function buyFactory(FactoryType _type) public payable returns (uint256) {
+    function buyFactory(FactoryType _type) public payable onlyExistingUser returns (uint256) {
         uint256 userId = addressToUser[msg.sender];
 
         // if user not registered
@@ -421,7 +425,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
 
     /// @notice level up for factory
     /// @param _factoryId id of factory
-    function levelUp(uint256 _factoryId) public payable {
+    function levelUp(uint256 _factoryId) public payable onlyExistingUser {
         Factory storage factory = factories[_factoryId];
         uint256 price = getPrice(factory.ftype, factory.level + 1);
 
@@ -447,7 +451,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     /// @notice sell resources of user with type
     /// @param _type type of resources
     /// @return sum of sell
-    function sellResources(uint8 _type) public returns (uint256) {
+    function sellResources(uint8 _type) public onlyExistingUser returns(uint256) {
         uint256 userId = addressToUser[msg.sender];
         uint256 sum = Math.min(users[userId].resources[_type] * getResourcePrice(_type), address(this).balance);
         users[userId].resources[_type] = 0;
