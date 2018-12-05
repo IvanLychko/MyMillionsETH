@@ -439,6 +439,8 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         user.balance = user.balance.sub(price);
         user.totalPay = user.totalPay.add(price);
 
+        _distributeReferrers(userId, price);
+
         // collect
         _collectResource(factory, user);
         factory.level++;
