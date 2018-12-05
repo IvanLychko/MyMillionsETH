@@ -272,7 +272,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         for (uint i = 0; i < referralLevelsCount; i++) {
             if (referrers[i] == 0) break;
 
-            uint16[] memory percents = getReferralPercents(users[referrers[i]].balance);
+            uint16[] memory percents = getReferralPercents(users[referrers[i]].totalPay);
             uint256 value = _sum * percents[i] / 10000;
             users[referrers[i]].balance = users[referrers[i]].balance.add(value);
             users[referrers[i]].referrersReceived = users[referrers[i]].referrersReceived.add(value);
