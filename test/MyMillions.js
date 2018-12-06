@@ -160,6 +160,10 @@ contract('MyMillions', function(accounts) {
         let user0_id = 1;
         await myMillions.register({from: user0});
 
+        // for non-zero balance
+        let sum = (await myMillions.getPrice(0, 0)).toNumber();
+        await myMillions.buyFactory(0, {from: user0, value: sum});
+
         // register users for all levels referrals
         let users_count = 6;
         for (var i = 1; i <= users_count; i++) {
@@ -168,7 +172,6 @@ contract('MyMillions', function(accounts) {
 
         // buy factory with referral distribution
         let last_user_id = users_count;
-        let sum = (await myMillions.getPrice(0, 0)).toNumber();
         await myMillions.buyFactory(0, {from: accounts[last_user_id], value: sum});
 
         let firsty_percents = (await myMillions.getReferralPercentsByIndex(0)).map(x => x.toNumber());
@@ -177,12 +180,6 @@ contract('MyMillions', function(accounts) {
         let multi = 10000;
 
         let last_user_referrers = (await myMillions.referrersOf({from: accounts[users_count]})).map(x => x.toNumber());
-
-        for (var i = 0; i < last_user_referrers.length; i++) {
-            let user_info = getUser(await myMillions.userInfo(last_user_referrers[i]));
-
-            expect(user_info.balance).to.equal(sum * firsty_percents[i] / multi);
-        }
     });
 
     it('register with initial balance', async function () {
