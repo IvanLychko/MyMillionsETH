@@ -265,19 +265,20 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     /// @param _userId the ID of the user who gets the affiliate fee
     /// @param _sum value of ethereum for distribute to referrers of user
     function _distributeReferrers(uint256 _userId, uint256 _sum) private {
-        if (users[_userId].totalPay < minSumReferral) return;
-
         uint256[] memory referrers = users[_userId].referrersByLevel;
 
         for (uint i = 0; i < referralLevelsCount; i++) {
+            uint256 referrerId = referrers[i];
+
             if (referrers[i] == 0) break;
+            if (users[referrerId].totalPay < minSumReferral) continue;
 
-            uint16[] memory percents = getReferralPercents(users[referrers[i]].totalPay);
+            uint16[] memory percents = getReferralPercents(users[referrerId].totalPay);
             uint256 value = _sum * percents[i] / 10000;
-            users[referrers[i]].balance = users[referrers[i]].balance.add(value);
-            users[referrers[i]].referrersReceived = users[referrers[i]].referrersReceived.add(value);
+            users[referrerId].balance = users[referrerId].balance.add(value);
+            users[referrerId].referrersReceived = users[referrerId].referrersReceived.add(value);
 
-            emit ReferrerDistribute(_userId, referrers[i], value);
+            emit ReferrerDistribute(_userId, referrerId, value);
         }
     }
 
@@ -385,6 +386,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     /// @param _value value of investment
     function _distributeInvestment(uint256 _value) private {
         developers.transfer(msg.value * developersPercent / 100);
+        marketers.transfer(msg.value * marketersPercent / 100);
     }
 
     /// @notice function of proceed payment
@@ -439,6 +441,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         user.balance = user.balance.sub(price);
         user.totalPay = user.totalPay.add(price);
 
+        _distributeInvestment(msg.value);
         _distributeReferrers(userId, price);
 
         // collect
