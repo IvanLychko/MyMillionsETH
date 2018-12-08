@@ -31,88 +31,95 @@ contract LeaderSystem {
         leaderBonuses[5] = 0;   // 0%
         leaderBonuses[6] = 0;   // 0%
 
-        leaders.push(LeadersTable(now + 86400, 86400, 0, new address[](leadersCount)));
-        leaders.push(LeadersTable(now + 604800, 604800, 0, new address[](leadersCount)));
-        leaders.push(LeadersTable(now + 77760000, 77760000, 0, new address[](leadersCount)));
-        leaders.push(LeadersTable(now + 31536000, 31536000, 0, new address[](leadersCount)));
+        leaders.push(LeadersTable(now + 86400, 86400, 0, new address[](0)));
+        leaders.push(LeadersTable(now + 604800, 604800, 0, new address[](0)));
+        leaders.push(LeadersTable(now + 77760000, 77760000, 0, new address[](0)));
+        leaders.push(LeadersTable(now + 31536000, 31536000, 0, new address[](0)));
     }
 
     function _clearLeadersTable(uint256 _indexTable) internal {
         LeadersTable storage _leader = leaders[_indexTable];
-        leaders[_indexTable] = LeadersTable(_leader.timestampEnd + _leader.duration, _leader.duration, 0, new address[](leadersCount));
+        leaders[_indexTable] = LeadersTable(_leader.timestampEnd + _leader.duration, _leader.duration, 0, new address[](0));
 
         emit LeadersClear(_indexTable);
+    }
+
+    function _insertLeader(address _addr, bool isExist, uint256 _indexTable, uint256 oldLength, uint256 newLength, uint256 newSum, address[] leadersUser) returns(address[]) {
+        LeadersTable storage leader = leaders[_indexTable];
+        address[] memory result = new address[](newLength);
+        bool isFinded = false;
+        bool isEdited = false;
+
+        for (uint256 j = 0; j < newLength; j++) {
+            if (j >= oldLength || newSum > leader.users[leadersUser[j]]) {
+                for (uint256 k = 0; k < j; k++)
+                    result[k] = leadersUser[k];
+
+                result[j] = _addr;
+
+                if (j < newLength - 1)
+                    for (k = j + 1; k <= oldLength; k++) {
+                        if (k == oldLength && (isExist || oldLength == newLength)) break;
+
+                        if (isFinded) {
+                            result[k] = leadersUser[k];
+                        }
+                        else {
+                            result[k] = leadersUser[k - 1];
+                        }
+
+                        if (!isFinded && isExist && leadersUser[k] == _addr)
+                            isFinded = true;
+                    }
+
+                isEdited = true;
+                break;
+            }
+        }
+
+        if (isEdited) leader.leaders = result;
+    }
+
+    function quickSort(LeadersTable storage leader, int left, int right) internal {
+        int i = left;
+        int j = right;
+        if (i == j) return;
+        uint pivot = leader.users[leader.leaders[uint(left + (right - left) / 2)]];
+        while (i <= j) {
+            while (leader.users[leader.leaders[uint(i)]] > pivot) i++;
+            while (pivot > leader.users[leader.leaders[uint(j)]]) j--;
+            if (i <= j) {
+                (leader.leaders[uint(i)], leader.leaders[uint(j)]) = (leader.leaders[uint(j)], leader.leaders[uint(i)]);
+                i++;
+                j--;
+            }
+        }
+        if (left < j)
+            quickSort(leader, left, j);
+        if (i < right)
+            quickSort(leader, i, right);
     }
 
     function _updateLeadersTable(uint256 i, address _addr, uint256 _value) internal {
         if (now > leaders[i].timestampEnd) _clearLeadersTable(i);
 
         LeadersTable storage leader = leaders[i];
-        address[] storage leadersUser = leader.leaders;
+        bool isExist = leader.users[_addr] >= leader.minSum;
 
-        uint256 newSum = leader.users[_addr].add(_value);
+        uint256 oldSum = leader.users[_addr];
+        uint256 newSum = oldSum.add(_value);
         leader.users[_addr] = newSum;
 
-        if (newSum < leader.minSum) return;
+        if (newSum < leader.minSum && leader.leaders.length == leadersCount) return;
 
-        uint256 newLength = Math.min(leadersUser.length + 1, leadersCount);
-        uint256 newCount = 0;
-        address[] memory result = new address[](newLength);
-        bool isAdded = false;
-        bool isExist = false;
+        if (!isExist || leader.leaders.length == 0) leader.leaders.push(_addr);
 
-        for (uint j = 0; j < newLength; j++) {
-            uint ja = j;
-            if (isAdded) {
-                ja--;
-                if (isExist) ja++;
-            }
-
-            if (leadersUser[j] == 0x0) {
-                if (!isAdded) {
-                    isAdded = true;
-                    result[newCount] = _addr;
-
-                    emit NewLeader(i, _addr, newCount, newSum);
-                }
-                else result[newCount] = leadersUser[ja];
-
-                newCount++;
-                break;
-            }
-
-            if (_addr == leadersUser[j]) {
-                if (isAdded) {
-                    isExist = true;
-                    result[newCount] = leadersUser[j - 1];
-                    newCount++;
-                }
-                else {
-                    isAdded = true;
-                    result[newCount] = _addr;
-                }
-
-                continue;
-            }
-
-            if (newSum > leader.users[leadersUser[j]] && !isAdded) {
-                isAdded = true;
-                result[newCount] = _addr;
-
-                emit NewLeader(i, _addr, newCount, newSum);
-            }
-            else {
-                result[newCount] = leadersUser[ja];
-            }
-
-            newCount++;
+        if (leader.leaders.length > 1) quickSort(leader, 0, int256(leader.leaders.length - 1));
+        if (leader.leaders.length > leadersCount) {
+            delete leader.leaders[leadersCount - 1];
         }
 
-        if (j >= newLength && isAdded) {
-            result[newLength - 1] = leadersUser[newLength - 1];
-        }
-
-        leader.leaders = result;
+        leader.minSum = leader.users[leader.leaders[leader.leaders.length - 1]];
     }
 
     function _updateLeaders(address _addr, uint256 _value) internal {

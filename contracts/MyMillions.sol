@@ -167,7 +167,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
     event Deposit(uint256 _userId, uint256 _value);
     event PaymentProceed(uint256 _userId, uint256 _factoryId, FactoryType _factoryType, uint256 _price);
     event CollectResources(FactoryType _type, uint256 _resources);
-    event LevelUp(uint256 _factoryId, uint8 _newLevel, uint256 _userId);
+    event LevelUp(uint256 _factoryId, uint8 _newLevel, uint256 _userId, uint256 _price);
     event Sell(uint256 _userId, uint8 _type, uint256 _sum);
 
     bool isSetted = false;
@@ -185,6 +185,8 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
 
     User[] public users;
     mapping (address => uint256) public addressToUser;
+    uint256 public totalUsers = 0;
+    uint256 public totalDeposit = 0;
 
     struct Factory {
         FactoryType ftype;      // factory type
@@ -226,6 +228,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
 
         uint256 index = users.push(User(msg.sender, msg.value, 0, 0, new uint256[](4), new uint256[](referralLevelsCount))) - 1;
         addressToUser[msg.sender] = index;
+        totalUsers++;
 
         emit CreateUser(index, msg.sender, msg.value);
         return index;
@@ -288,6 +291,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         require(msg.value > minSumDeposit, "Deposit does not enough");
         uint256 userId = addressToUser[msg.sender];
         users[userId].balance = users[userId].balance.add(msg.value);
+        totalDeposit += msg.value;
 
         // distribute
         _distributeInvestment(msg.value);
@@ -397,10 +401,11 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
 
         require(_checkPayment(user, _factory.ftype, _factory.level));
 
-        uint256 price = getPrice(FactoryType.Wood, 0);
+        uint256 price = getPrice(_factory.ftype, 0);
         user.balance = user.balance.add(msg.value);
         user.balance = user.balance.sub(price);
         user.totalPay = user.totalPay.add(price);
+        totalDeposit += msg.value;
 
         uint256 index = factories.push(_factory) - 1;
         factoryToUser[index] = _userId;
@@ -440,6 +445,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
         user.balance = user.balance.add(msg.value);
         user.balance = user.balance.sub(price);
         user.totalPay = user.totalPay.add(price);
+        totalDeposit += msg.value;
 
         _distributeInvestment(msg.value);
         _distributeReferrers(userId, price);
@@ -450,7 +456,7 @@ contract MyMillions is Ownable, Improvements, ReferralsSystem, LeaderSystem {
 
         _updateLeaders(msg.sender, msg.value);
 
-        emit LevelUp(_factoryId, factory.level, userId);
+        emit LevelUp(_factoryId, factory.level, userId, price);
     }
 
     /// @notice sell resources of user with type

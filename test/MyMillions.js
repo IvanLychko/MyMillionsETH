@@ -448,10 +448,9 @@ contract('MyMillions', function(accounts) {
         let addresses = leaders[0];
         let balance = leaders[1].map(x => x.toNumber());
 
+        expect(addresses.length).to.equal(1);
         expect(addresses[0]).to.equal(accounts[1]);
-        expect(addresses[1]).to.equal('0x0000000000000000000000000000000000000000');
         expect(balance[0].toString()).to.equal(sum);
-        expect(balance[1]).to.equal(0);
     });
 
     it('leaders simple concurrency', async function () {
@@ -513,10 +512,10 @@ contract('MyMillions', function(accounts) {
             accounts[6],
             accounts[1],
             accounts[4],
-            accounts[2],
             accounts[3],
-            accounts[5]
-        ]
+            accounts[5],
+            accounts[2]
+        ];
 
         // check momental leaders tables
         let leaders = await myMillions.getLeaders(0);
