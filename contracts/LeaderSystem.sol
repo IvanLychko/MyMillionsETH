@@ -44,42 +44,6 @@ contract LeaderSystem {
         emit LeadersClear(_indexTable);
     }
 
-    function _insertLeader(address _addr, bool isExist, uint256 _indexTable, uint256 oldLength, uint256 newLength, uint256 newSum, address[] leadersUser) returns(address[]) {
-        LeadersTable storage leader = leaders[_indexTable];
-        address[] memory result = new address[](newLength);
-        bool isFinded = false;
-        bool isEdited = false;
-
-        for (uint256 j = 0; j < newLength; j++) {
-            if (j >= oldLength || newSum > leader.users[leadersUser[j]]) {
-                for (uint256 k = 0; k < j; k++)
-                    result[k] = leadersUser[k];
-
-                result[j] = _addr;
-
-                if (j < newLength - 1)
-                    for (k = j + 1; k <= oldLength; k++) {
-                        if (k == oldLength && (isExist || oldLength == newLength)) break;
-
-                        if (isFinded) {
-                            result[k] = leadersUser[k];
-                        }
-                        else {
-                            result[k] = leadersUser[k - 1];
-                        }
-
-                        if (!isFinded && isExist && leadersUser[k] == _addr)
-                            isFinded = true;
-                    }
-
-                isEdited = true;
-                break;
-            }
-        }
-
-        if (isEdited) leader.leaders = result;
-    }
-
     function quickSort(LeadersTable storage leader, int left, int right) internal {
         int i = left;
         int j = right;
